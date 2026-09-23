@@ -14,6 +14,7 @@ export interface Env {
   JEV_MODEL: string;
   AUTH_MODE?: 'legacy' | 'github';
   APP_URL?: string;
+  APP_LEGACY_URL?: string;
   GITHUB_CLIENT_ID?: string;
   GITHUB_CLIENT_SECRET?: string;
   GITHUB_APP_SLUG?: string;

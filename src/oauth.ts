@@ -24,15 +24,21 @@ const sessionCookie = '__Host-jevmate_session',
 function setCookie(name: string, value: string, seconds: number) {
   return `${name}=${value}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${seconds}`;
 }
-function appOrigin(env: Env) {
-  if (!env.APP_URL) throw new HttpError(503, 'Configure APP_URL before enabling GitHub login.');
-  const url = new URL(env.APP_URL);
+function configuredOrigin(value: string, name: string) {
+  const url = new URL(value);
   if (
     url.protocol !== 'https:' &&
     !(url.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(url.hostname))
   )
-    throw new HttpError(503, 'APP_URL must use HTTPS.');
+    throw new HttpError(503, `${name} must use HTTPS.`);
   return url.origin;
+}
+function appOrigin(env: Env) {
+  if (!env.APP_URL) throw new HttpError(503, 'Configure APP_URL before enabling GitHub login.');
+  return configuredOrigin(env.APP_URL, 'APP_URL');
+}
+function legacyOrigin(env: Env) {
+  return env.APP_LEGACY_URL ? configuredOrigin(env.APP_LEGACY_URL, 'APP_LEGACY_URL') : null;
 }
 export function loginReady(env: Env) {
   return !!(
@@ -54,7 +60,11 @@ export async function requireSession(req: Request, env: Env): Promise<Session> {
   if (!session) throw new HttpError(401, 'Sign in with GitHub to continue.');
   if (!['GET', 'HEAD'].includes(req.method)) {
     const origin = req.headers.get('Origin');
-    if ((origin && origin !== appOrigin(env)) || req.headers.get('X-CSRF-Token') !== session.csrf)
+    // __Host cookies belong to the request hostname, so compare CSRF Origin to that hostname.
+    if (
+      (origin && origin !== new URL(req.url).origin) ||
+      req.headers.get('X-CSRF-Token') !== session.csrf
+    )
       throw new HttpError(403, 'Invalid session request. Refresh the page and retry.');
   }
   return session;
@@ -78,6 +88,8 @@ export async function oauth(req: Request, env: Env): Promise<Response> {
   if (!loginReady(env)) throw new HttpError(503, 'GitHub login is not configured yet.');
   const origin = appOrigin(env);
   if (req.method === 'GET' && url.pathname === '/auth/github') {
+    // Start OAuth on the canonical host, which must also receive its browser-bound state cookie.
+    if (url.origin !== origin) return Response.redirect(origin + '/auth/github', 302);
     await consumeLimit(
       env,
       'oauth:' +
@@ -110,6 +122,9 @@ export async function oauth(req: Request, env: Env): Promise<Response> {
     });
   }
   if (req.method === 'GET' && url.pathname === '/auth/callback') {
+    const callbackOrigin = url.origin;
+    if (callbackOrigin !== origin && callbackOrigin !== legacyOrigin(env))
+      throw new HttpError(400, 'Invalid OAuth callback origin.');
     const state = url.searchParams.get('state') || '',
       code = url.searchParams.get('code') || '';
     if (
@@ -131,7 +146,7 @@ export async function oauth(req: Request, env: Env): Promise<Response> {
       throw new HttpError(400, 'OAuth state expired or was already used. Start sign-in again.');
     const creds = await exchange(env, {
       code,
-      redirect_uri: origin + '/auth/callback',
+      redirect_uri: callbackOrigin + '/auth/callback',
       code_verifier: await unseal(env.CREDENTIAL_KEY!, 'oauth:' + id, stored.verifier),
     });
     const user = z
@@ -151,7 +166,7 @@ export async function oauth(req: Request, env: Env): Promise<Response> {
     await env.DB.prepare('INSERT INTO sessions(id,user_id,csrf,expires_at) VALUES(?,?,?,?)')
       .bind(await hash(session), userId, randomToken(), Date.now() + 7 * 86400000)
       .run();
-    const headers = new Headers({ Location: origin + '/' });
+    const headers = new Headers({ Location: callbackOrigin + '/' });
     headers.append('Set-Cookie', setCookie(sessionCookie, session, 7 * 86400));
     headers.append('Set-Cookie', setCookie(stateCookie, '', 0));
     return new Response(null, { status: 302, headers });

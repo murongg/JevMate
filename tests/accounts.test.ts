@@ -51,6 +51,7 @@ beforeAll(async () => {
     JEV_MODEL: 'jev-test',
     AUTH_MODE: 'github',
     APP_URL: 'https://example.test',
+    APP_LEGACY_URL: 'https://legacy.example.test',
     GITHUB_CLIENT_ID: 'synthetic-client',
     GITHUB_CLIENT_SECRET: 'synthetic-client-secret',
     GITHUB_APP_SLUG: 'synthetic-app',
@@ -319,6 +320,58 @@ it('starts PKCE OAuth and rejects callback state from a different browser', asyn
     env,
   );
   expect(callback.status).toBe(400);
+});
+it('uses the canonical domain for new logins while keeping legacy-domain sessions usable', async () => {
+  const login = await worker.fetch(new Request('https://legacy.example.test/auth/github'), env);
+  expect(login.status).toBe(302);
+  expect(login.headers.get('Location')).toBe('https://example.test/auth/github');
+  expect(login.headers.has('Set-Cookie')).toBe(false);
+  const logout = await worker.fetch(
+    new Request('https://legacy.example.test/auth/logout', {
+      method: 'POST',
+      headers: {
+        Cookie: '__Host-jevmate_session=session-101',
+        Origin: 'https://legacy.example.test',
+        'X-CSRF-Token': csrf,
+      },
+    }),
+    env,
+  );
+  expect(logout.status).toBe(200);
+});
+it('finishes an in-flight legacy callback on the origin that owns its state cookie', async () => {
+  const state = 'synthetic-legacy-state';
+  const id = await hash(state);
+  await env.DB.prepare('INSERT INTO oauth_states(id,verifier,expires_at) VALUES(?,?,?)')
+    .bind(id, await seal(key, 'oauth:' + id, 'synthetic-verifier'), Date.now() + 600000)
+    .run();
+  const response = await worker.fetch(
+    new Request('https://legacy.example.test/auth/callback?code=synthetic-code&state=' + state, {
+      headers: { Cookie: '__Host-jevmate_oauth=' + state },
+    }),
+    env,
+  );
+  expect(response.status).toBe(302);
+  expect(response.headers.get('Location')).toBe('https://legacy.example.test/');
+  const exchange = vi
+    .mocked(fetch)
+    .mock.calls.find(([url]) => url === 'https://github.com/login/oauth/access_token');
+  expect(new URLSearchParams(String(exchange?.[1]?.body)).get('redirect_uri')).toBe(
+    'https://legacy.example.test/auth/callback',
+  );
+});
+it('rejects a callback on an unconfigured hostname even with a valid state cookie', async () => {
+  const start = await worker.fetch(new Request('https://example.test/auth/github'), env);
+  const target = new URL(start.headers.get('Location')!);
+  const response = await worker.fetch(
+    new Request(
+      'https://unlisted.example.test/auth/callback?code=synthetic-code&state=' +
+        target.searchParams.get('state'),
+      { headers: { Cookie: start.headers.get('Set-Cookie')!.split(';')[0] } },
+    ),
+    env,
+  );
+  expect(response.status).toBe(400);
 });
 it('consumes OAuth state once and sets an HttpOnly secure session', async () => {
   const r = await worker.fetch(new Request('https://example.test/auth/github'), env);

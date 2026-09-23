@@ -136,6 +136,21 @@ Legacy history stays in its original tables and is never assigned to the first G
 
 Use HTTPS for production. For local OAuth, register an exact local callback and use the matching `APP_URL`; HTTPS local development is preferable for Secure cookies. Do not send production OAuth codes to a development origin.
 
+## Custom domain
+
+To use a subdomain in a Cloudflare zone on the same account, add a [Worker Custom Domain](https://developers.cloudflare.com/workers/configuration/routing/custom-domains/) to your Wrangler configuration. Keep `workers_dev` enabled if the existing address should remain reachable:
+
+```jsonc
+{
+  "workers_dev": true,
+  "routes": [{ "pattern": "triage.example.com", "custom_domain": true }],
+}
+```
+
+Deploy and verify `https://triage.example.com/health` before changing login or webhook settings. Cloudflare provisions the DNS record and certificate for the Custom Domain. An existing DNS record for that exact hostname must be resolved first.
+
+In the GitHub App's **General** settings, add `https://triage.example.com/auth/callback` as an exact Redirect URI with wildcard matching off. Update Homepage, Setup URL, and Webhook URL to the new domain; keep the previous Redirect URI while outstanding OAuth attempts may still return there. Then set `APP_URL` to `https://triage.example.com` and redeploy. If you retain the old workers.dev address, set `APP_LEGACY_URL` to its origin so callbacks already started there can finish. New sign-ins initiated on the old address are sent to the canonical domain. Existing sessions on the old hostname remain usable, but browser cookies are hostname-bound, so each user signs in once on the new domain.
+
 ## Smoke checks
 
 1. Open `<worker-url>/health`; expect `{"ok":true,"service":"JevRepoTriage"}`. This checks the endpoint, not credentials.

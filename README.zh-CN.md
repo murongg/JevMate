@@ -14,6 +14,8 @@
   <a href="https://typesafe.ai/"><img src="https://img.shields.io/badge/Powered%20by-Jev-b7ef70" alt="由 Jev 驱动" /></a>
 </p>
 
+[在线使用](https://triage.mrong.me/) · [English](README.md) · [部署指南](docs/deployment.md)
+
 Jev 负责判断类型、模块和信息完整度；维护者查看原文、修改建议并确认后，JevRepoTriage 才会给 Issue 添加标签。
 
 ## 界面
