@@ -1,5 +1,5 @@
 ---
-name: JevMate
+name: JevRepoTriage
 description: A bot-native operator console for human-reviewed GitHub triage.
 colors:
   canvas: '#101210'
@@ -22,7 +22,7 @@ rounded:
   label: '2px'
 ---
 
-# JevMate — Bot operator console
+# JevRepoTriage — Bot operator console
 
 ## Direction
 
@@ -30,7 +30,7 @@ The user explicitly requested a more bot-like, geeky and distinctive interface. 
 
 ## Identity and typography
 
-`Bot.tsx` owns the crisp, geometric pixel robot; `Brand.tsx` composes it with the JevMate wordmark. The same bot appears on the connection page, in instance status, in model assessment headers and in empty states. The favicon uses the same geometry.
+`Bot.tsx` owns the crisp, geometric pixel robot; `Brand.tsx` composes it with the JevRepoTriage wordmark. The same bot appears on the connection page, in instance status, in model assessment headers and in empty states. The favicon uses the same geometry.
 
 Geist Variable is the reading and heading face. Geist Mono Variable is reserved for identifiers, metadata, model names and console labels. Both fonts are bundled from Fontsource and served locally; the Worker CSP permits only same-origin fonts. Chinese falls back to the platform's CJK font. Phosphor provides consistent operational icons, all decorative icons hidden from assistive technology.
 

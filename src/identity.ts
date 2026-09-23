@@ -124,7 +124,7 @@ export async function userRequest(token: string, path: string): Promise<unknown>
       Authorization: 'Bearer ' + token,
       Accept: 'application/vnd.github+json',
       'X-GitHub-Api-Version': '2022-11-28',
-      'User-Agent': 'JevMate',
+      'User-Agent': 'JevRepoTriage',
     },
     signal: AbortSignal.timeout(15000),
   });

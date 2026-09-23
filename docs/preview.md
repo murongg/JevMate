@@ -5,7 +5,7 @@ Use this only with a local database and synthetic data. It needs no GitHub/Jev k
 1. Copy `.dev.vars.example` to `.dev.vars`. Set:
 
 ```dotenv
-ADMIN_TOKEN="jevmate-local-preview-token-not-for-production"
+ADMIN_TOKEN="jevrepotriage-local-preview-token-not-for-production"
 ALLOWED_REPOS="example/demo"
 JEV_MODEL="synthetic-preview"
 ```

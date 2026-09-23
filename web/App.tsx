@@ -182,7 +182,7 @@ function Workspace() {
           <section className="login-panel">
             <div className="panel-terminal">
               <span className="terminal-dot" />
-              <span>jevmate / connect</span>
+              <span>jevrepotriage / connect</span>
               <span className="terminal-version">v0.1</span>
             </div>
             <div className="login-panel-body">
@@ -265,7 +265,9 @@ function Workspace() {
         <div className="workspace-context">
           <span className="context-divider" />
           <Icon name="repo" />
-          <span>{session?.user.login || data.config.repos[0]?.split('/')[0] || 'JevMate'}</span>
+          <span>
+            {session?.user.login || data.config.repos[0]?.split('/')[0] || 'JevRepoTriage'}
+          </span>
           <span className="context-path">/ {t('workspaceLabel')}</span>
         </div>
         <div className="commandbar-tools">
@@ -565,7 +567,7 @@ function Workspace() {
           )}
         </section>
         <footer className="workspace-foot">
-          {t('manualMode')} <span>{data.config.model} · JevMate 0.1</span>
+          {t('manualMode')} <span>{data.config.model} · JevRepoTriage 0.1</span>
         </footer>
       </main>
     </div>

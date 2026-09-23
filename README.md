@@ -1,29 +1,29 @@
 <p align="center">
-  <img src="docs/brand/github-app-logo.png" alt="JevMate pixel robot logo" width="112" height="112" />
+  <img src="docs/brand/github-app-logo.png" alt="JevRepoTriage pixel robot logo" width="112" height="112" />
 </p>
 
-<h1 align="center">JevMate</h1>
+<h1 align="center">JevRepoTriage</h1>
 
 <p align="center">A self-hosted GitHub issue triage assistant powered by <strong>Jev</strong>, built with React and Cloudflare Workers.</p>
 
 <p align="center">
-  <a href="https://github.com/murongg/JevMate/actions/workflows/ci.yml"><img src="https://github.com/murongg/JevMate/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI status" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/murongg/JevMate" alt="License" /></a>
-  <a href="https://github.com/murongg/JevMate/stargazers"><img src="https://img.shields.io/github/stars/murongg/JevMate" alt="GitHub stars" /></a>
+  <a href="https://github.com/murongg/JevRepoTriage/actions/workflows/ci.yml"><img src="https://github.com/murongg/JevRepoTriage/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI status" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/murongg/JevRepoTriage" alt="License" /></a>
+  <a href="https://github.com/murongg/JevRepoTriage/stargazers"><img src="https://img.shields.io/github/stars/murongg/JevRepoTriage" alt="GitHub stars" /></a>
   <a href="https://developers.cloudflare.com/workers/"><img src="https://img.shields.io/badge/Cloudflare-Workers-F38020?logo=cloudflare&amp;logoColor=white" alt="Cloudflare Workers" /></a>
   <a href="https://typesafe.ai/"><img src="https://img.shields.io/badge/Powered%20by-Jev-b7ef70" alt="Powered by Jev" /></a>
 </p>
 
 [中文文档](README.zh-CN.md) · [Deployment](docs/deployment.md) · [Contributing](CONTRIBUTING.md)
 
-Jev suggests a category, module, and missing report details. You review the original issue, adjust the labels, and explicitly confirm before JevMate adds them to GitHub.
+Jev suggests a category, module, and missing report details. You review the original issue, adjust the labels, and explicitly confirm before JevRepoTriage adds them to GitHub.
 
 ## Interface
 
 A dark Bot operator console with a pixel robot identity, compact issue review, and on-demand import controls. Screenshots below use explicitly synthetic local fixtures.
 
-![JevMate connection console](docs/screenshots/connect.png)
-![JevMate issue review console](docs/screenshots/workspace.png)
+![JevRepoTriage connection console](docs/screenshots/connect.png)
+![JevRepoTriage issue review console](docs/screenshots/workspace.png)
 
 ## What ships in v0.1
 
@@ -36,7 +36,7 @@ A dark Bot operator console with a pixel robot identity, compact issue review, a
 - Multiple App installations and repositories; optional legacy admin-token mode.
 - Additive label updates, content freshness checks, and stable retry behavior after uncertain write failures.
 
-This is an early MVP. There is no automatic commenting, issue closing, duplicate detection, PR review, team billing, or automatic labeling. The source is open; Jev is an external hosted model and requires your own API access. JevMate is an independent community project, not an official TypeSafe or GitHub product.
+This is an early MVP. There is no automatic commenting, issue closing, duplicate detection, PR review, team billing, or automatic labeling. The source is open; Jev is an external hosted model and requires your own API access. JevRepoTriage is an independent community project, not an official TypeSafe or GitHub product.
 
 ## Architecture
 
