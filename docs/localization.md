@@ -1,6 +1,6 @@
 # Localization
 
-JevMate ships English (`en`) and Simplified Chinese (`zh-CN`). English is the initial default even when the browser prefers Chinese. A valid, explicitly saved preference takes precedence on later visits.
+JevRepoTriage ships English (`en`) and Simplified Chinese (`zh-CN`). English is the initial default even when the browser prefers Chinese. A valid, explicitly saved preference takes precedence on later visits.
 
 ## Boundaries
 
@@ -10,7 +10,7 @@ JevMate ships English (`en`) and Simplified Chinese (`zh-CN`). English is the in
 - `web/Language.tsx` provides the accessible native language selector.
 - Components use `useI18n()`; they do not detect browser language or own translation dictionaries.
 
-Only the locale preference is written to the versioned `jevmate.locale.v1` localStorage key. Authentication tokens are still kept in memory. Invalid preferences fall back to English. Storage access failures are caught so the interface can still switch languages for the current page.
+Only the locale preference is written to the versioned `jevmate.locale.v1` localStorage key. This original key is retained so existing users keep their language choice after the brand rename. The legacy admin token stays in memory; GitHub sessions use a secure cookie. Invalid preferences fall back to English. Storage access failures are caught so the interface can still switch languages for the current page.
 
 Notifications keep message keys and parameters in state, rather than already-translated strings, so existing and asynchronously arriving notices follow the current locale. Error diagnostics are translated at render time. Known API errors use their existing English messages for compatibility; if backend wording changes, update the error catalog. Unknown diagnostics are shown unchanged instead of losing troubleshooting information.
 

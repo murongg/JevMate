@@ -1,4 +1,4 @@
-# Deploy JevMate to Cloudflare
+# Deploy JevRepoTriage to Cloudflare
 
 You need a Cloudflare account, permission to create/install a GitHub App, and a TypeSafe API key with Jev access. Choose public GitHub login with per-user keys, or legacy admin mode with one installation and a repository allowlist. The steps below bootstrap legacy mode; then follow [public GitHub login](#public-github-login) to enable accounts.
 
@@ -12,12 +12,14 @@ npx wrangler login
 ## 2. Create storage and queues
 
 ```sh
-npx wrangler d1 create jevmate
-npx wrangler queues create jevmate-tasks
-npx wrangler queues create jevmate-dead
+npx wrangler d1 create jevrepotriage
+npx wrangler queues create jevrepotriage-tasks
+npx wrangler queues create jevrepotriage-dead
 ```
 
 Copy the D1 `database_id` into `wrangler.jsonc`, replacing the zero UUID. If these names are already in use, choose your own and update all matching producer/consumer/database entries. The dead-letter queue has no consumer; exhausted tasks remain visible as failed jobs in the inbox. You can requeue a failed job there after fixing its cause.
+
+When upgrading an existing deployment from the former JevMate branding, retain its current Worker name, D1 database and queue names. The new names above are defaults for fresh installations; changing resource names does not migrate stored data or secrets.
 
 ## 3. Set an admin token and deploy the initial endpoint
 
@@ -32,13 +34,13 @@ npm run deploy
 
 Paste the generated value into Wrangler's prompt, then keep it in your password manager. Do not put it in a URL, commit it, or pass it through a frontend environment variable.
 
-The initial deployment can serve the inbox and `/health` before GitHub/Jev are configured. Copy the `https://jevmate.<your-subdomain>.workers.dev` URL printed by Wrangler. Use your actual generated URL throughout the following steps.
+The initial deployment can serve the inbox and `/health` before GitHub/Jev are configured. Copy the `https://jevrepotriage.<your-subdomain>.workers.dev` URL printed by Wrangler. Use your actual generated URL throughout the following steps.
 
 ## 4. Register a GitHub App
 
 In GitHub's developer settings, create a GitHub App:
 
-- Name: a unique name such as your own JevMate instance name.
+- Name: a unique name such as your own JevRepoTriage instance name.
 - Homepage: your Worker URL.
 - Webhook URL: `<worker-url>/webhooks/github`.
 - Webhook secret: another random value (generate with `openssl rand -hex 32`).
@@ -52,11 +54,11 @@ Copy the App ID. Open the installation settings page and copy the installation I
 
 ## 5. Convert and store the App private key
 
-JevMate uses Web Crypto via `jose` and expects **PKCS8** (`BEGIN PRIVATE KEY`). GitHub may download a PKCS1 (`BEGIN RSA PRIVATE KEY`) key; convert it locally:
+JevRepoTriage uses Web Crypto via `jose` and expects **PKCS8** (`BEGIN PRIVATE KEY`). GitHub may download a PKCS1 (`BEGIN RSA PRIVATE KEY`) key; convert it locally:
 
 ```sh
-openssl pkcs8 -topk8 -nocrypt -in /path/to/github-app.pem -out /path/to/jevmate-pkcs8.pem
-npx wrangler secret put GITHUB_PRIVATE_KEY < /path/to/jevmate-pkcs8.pem
+openssl pkcs8 -topk8 -nocrypt -in /path/to/github-app.pem -out /path/to/jevrepotriage-pkcs8.pem
+npx wrangler secret put GITHUB_PRIVATE_KEY < /path/to/jevrepotriage-pkcs8.pem
 npx wrangler secret put WEBHOOK_SECRET
 npx wrangler secret put TYPESAFE_API_KEY
 ```
@@ -105,7 +107,7 @@ Set these non-secret variables in your Wrangler configuration:
 ```json
 {
   "AUTH_MODE": "github",
-  "APP_URL": "https://jevmate.<your-subdomain>.workers.dev",
+  "APP_URL": "https://jevrepotriage.<your-subdomain>.workers.dev",
   "GITHUB_APP_ID": "your-numeric-app-id",
   "GITHUB_APP_SLUG": "your-app-slug",
   "DAILY_ANALYSIS_LIMIT": "200",
@@ -135,9 +137,9 @@ Use HTTPS for production. For local OAuth, register an exact local callback and 
 
 ## Smoke checks
 
-1. Open `<worker-url>/health`; expect `{"ok":true,"service":"JevMate"}`. This checks the endpoint, not credentials.
+1. Open `<worker-url>/health`; expect `{"ok":true,"service":"JevRepoTriage"}`. This checks the endpoint, not credentials.
 2. Open the root page and enter your admin token. Confirm the repository dropdown matches your allowlist.
-3. Use a test repository and create a synthetic issue. In the GitHub App's recent webhook deliveries, confirm a `202` response. The job should appear in JevMate after refreshing, followed by a suggestion. A `ping` returns `200`.
+3. Use a test repository and create a synthetic issue. In the GitHub App's recent webhook deliveries, confirm a `202` response. The job should appear in JevRepoTriage after refreshing, followed by a suggestion. A `ping` returns `200`.
 4. Read the original report and choose an existing label. Click **Confirm and add labels**. Confirm that it appears on GitHub and existing labels remain.
 5. Create another synthetic issue, wait for analysis, then edit its body before applying the original suggestion. The stale suggestion must be rejected; refresh/import to inspect the new analysis.
 6. If analysis fails, inspect the failed job and deployment secrets, then choose **Requeue**.
@@ -162,7 +164,7 @@ For a UI-only preview with clearly synthetic records, see [local preview](previe
 - Label writes preserve the originally approved label set after uncertain failures. Retry the same operation. Additive GitHub label writes are safe to repeat; arbitrary comments would not have this property and are intentionally absent.
 - The write freshness check happens immediately before label validation/write. GitHub does not provide an atomic content-compare-and-label endpoint, so an edit during the final network gap is still possible.
 - New webhook analyses fetch the latest issue content to reduce out-of-order event problems. Old snapshots remain in history and cannot apply after a content change.
-- Historical import is explicit and limited to one 25-entry GitHub page. GitHub's results include PRs; JevMate filters them out. Changing repository data can move page boundaries; repeated snapshots are deduplicated.
+- Historical import is explicit and limited to one 25-entry GitHub page. GitHub's results include PRs; JevRepoTriage filters them out. Changing repository data can move page boundaries; repeated snapshots are deduplicated.
 - Importing is asynchronous; refresh the inbox after completion. Jobs exhausting queue retries can be requeued manually.
 - Never share an admin token with someone who should not have access to every configured repository.
 - This initial version does not include automated backups or data retention. Configure D1 backups/retention to match your deployment requirements.

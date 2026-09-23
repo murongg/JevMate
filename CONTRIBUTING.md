@@ -1,4 +1,4 @@
-# Contributing to JevMate
+# Contributing to JevRepoTriage
 
 Use Node.js 22.12+ and `npm ci`. Run `npm run check` before submitting a change.
 

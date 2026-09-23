@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "jevmate",
+  "name": "jevrepotriage",
   "main": "src/worker.ts",
   "compatibility_date": "2026-09-01",
   "assets": { "directory": "./dist/client", "binding": "ASSETS", "run_worker_first": true },
@@ -17,21 +17,21 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "jevmate",
+      "database_name": "jevrepotriage",
       "database_id": "00000000-0000-0000-0000-000000000000",
       "migrations_dir": "migrations",
     },
   ],
   "queues": {
-    "producers": [{ "binding": "TASKS", "queue": "jevmate-tasks" }],
+    "producers": [{ "binding": "TASKS", "queue": "jevrepotriage-tasks" }],
     "consumers": [
       {
-        "queue": "jevmate-tasks",
+        "queue": "jevrepotriage-tasks",
         "max_batch_size": 1,
         "max_batch_timeout": 5,
         "max_retries": 3,
         "max_concurrency": 2,
-        "dead_letter_queue": "jevmate-dead",
+        "dead_letter_queue": "jevrepotriage-dead",
       },
     ],
   },

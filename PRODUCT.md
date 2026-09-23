@@ -1,4 +1,4 @@
-# JevMate
+# JevRepoTriage
 
 <!-- impeccable:product-schema 1 -->
 
@@ -12,7 +12,7 @@ React, chosen by the user. Cloudflare Workers, D1 and Queues for self-hosting. D
 
 ## Users
 
-Open-source GitHub repository maintainers triaging incoming issues.
+GitHub repository maintainers triaging incoming issues. PR triage is a possible future extension.
 
 ## Product Purpose
 
@@ -20,19 +20,19 @@ Use Jev to classify issues and identify missing information, then let a maintain
 
 ## Operating Context
 
-The user chose the name JevMate and the local project directory. This first version is self-hosted, using the deployer's GitHub App installation and Jev API key.
+The project is named JevRepoTriage. The app runs on Cloudflare Workers and lets GitHub users connect their own repositories and supply their own Jev keys.
 
 ## Capabilities and Constraints
 
-One installation per deployment, explicit repository allowlist, asynchronous analysis, additive labels after manual confirmation, batch imports and retryable failures. No automatic comments, closing issues, code execution, or multi-user tenancy in this version. Labels and module criteria come from policy.json. The model service is external; this project does not distribute model weights.
+Public GitHub sign-in, isolated personal workspaces, encrypted per-user Jev keys, multiple installations, asynchronous analysis, additive labels after manual confirmation, imports and retryable failures. No automatic comments, closing issues, code execution, or PR review in this version. Labels and module criteria come from policy.json. The model service is external; this project does not distribute model weights.
 
 ## Evidence on Hand
 
-No live credentials are configured. Automated fixtures are synthetic. Any preview samples must be explicitly marked synthetic and must not enter real GitHub operations.
+The project has a live Cloudflare deployment. Automated fixtures and documentation screenshots are synthetic. Preview samples must remain separate from real GitHub operations.
 
 ## Open Decisions
 
-MIT is the proposed default license for this implementation. The source repository is https://github.com/murongg/JevMate. A production deployment has not been configured. UI details follow an operational list/detail layout; no existing branding assets are available.
+MIT is the license. The source repository is https://github.com/murongg/JevRepoTriage. The dark operator console uses a pixel robot across the website and GitHub App. Existing storage, queue and session identifiers stay stable across the brand rename.
 
 ## Localization
 

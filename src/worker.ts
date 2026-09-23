@@ -197,7 +197,7 @@ export default {
       const url = new URL(req.url);
       if (url.pathname.startsWith('/auth/')) return secure(await oauth(req, env));
       if (url.pathname === '/health' && req.method === 'GET')
-        return secure(Response.json({ ok: true, service: 'JevMate' }));
+        return secure(Response.json({ ok: true, service: 'JevRepoTriage' }));
       if (url.pathname === '/webhooks/github' && req.method === 'POST')
         return secure(await webhook(req, env));
       if (url.pathname.startsWith('/api/')) return secure(await api(req, env, url));

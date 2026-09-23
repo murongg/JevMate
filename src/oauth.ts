@@ -18,6 +18,7 @@ function cookie(req: Request, name: string) {
     .filter((s) => s.startsWith(name + '='));
   return matches.length === 1 ? matches[0].slice(name.length + 1) : '';
 }
+// Cookie names stay stable so existing GitHub sessions survive the brand rename.
 const sessionCookie = '__Host-jevmate_session',
   stateCookie = '__Host-jevmate_oauth';
 function setCookie(name: string, value: string, seconds: number) {

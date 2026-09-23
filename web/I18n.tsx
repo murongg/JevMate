@@ -4,6 +4,7 @@ import { zhCN, errors, dynamicErrors } from './locales/zh-CN';
 export type Locale = 'en' | 'zh-CN';
 export type Params = Record<string, string | number>;
 export type Message = { key: MessageKey; params?: Params };
+// Keep the original storage key so a brand rename does not reset language preferences.
 const storageKey = 'jevmate.locale.v1';
 const catalogs = {
   en: {

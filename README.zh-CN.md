@@ -1,27 +1,27 @@
 <p align="center">
-  <img src="docs/brand/github-app-logo.png" alt="JevMate 像素机器人 Logo" width="112" height="112" />
+  <img src="docs/brand/github-app-logo.png" alt="JevRepoTriage 像素机器人 Logo" width="112" height="112" />
 </p>
 
-<h1 align="center">JevMate</h1>
+<h1 align="center">JevRepoTriage</h1>
 
 <p align="center">基于 <strong>Jev</strong> 的开源 GitHub Issue 分诊助手，可部署到自己的 Cloudflare 账户。</p>
 
 <p align="center">
-  <a href="https://github.com/murongg/JevMate/actions/workflows/ci.yml"><img src="https://github.com/murongg/JevMate/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI 状态" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/github/license/murongg/JevMate" alt="开源协议" /></a>
-  <a href="https://github.com/murongg/JevMate/stargazers"><img src="https://img.shields.io/github/stars/murongg/JevMate" alt="GitHub Stars" /></a>
+  <a href="https://github.com/murongg/JevRepoTriage/actions/workflows/ci.yml"><img src="https://github.com/murongg/JevRepoTriage/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI 状态" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/murongg/JevRepoTriage" alt="开源协议" /></a>
+  <a href="https://github.com/murongg/JevRepoTriage/stargazers"><img src="https://img.shields.io/github/stars/murongg/JevRepoTriage" alt="GitHub Stars" /></a>
   <a href="https://developers.cloudflare.com/workers/"><img src="https://img.shields.io/badge/Cloudflare-Workers-F38020?logo=cloudflare&amp;logoColor=white" alt="Cloudflare Workers" /></a>
   <a href="https://typesafe.ai/"><img src="https://img.shields.io/badge/Powered%20by-Jev-b7ef70" alt="由 Jev 驱动" /></a>
 </p>
 
-Jev 负责判断类型、模块和信息完整度；维护者查看原文、修改建议并确认后，JevMate 才会给 Issue 添加标签。
+Jev 负责判断类型、模块和信息完整度；维护者查看原文、修改建议并确认后，JevRepoTriage 才会给 Issue 添加标签。
 
 ## 界面
 
 深色 Bot 控制台，包含像素机器人标识、紧凑的审阅分区和按需展开的导入面板。截图使用明确标注的本地模拟数据。
 
-![JevMate 登录控制台](docs/screenshots/connect.png)
-![JevMate 审阅工作台](docs/screenshots/workspace.png)
+![JevRepoTriage 登录控制台](docs/screenshots/connect.png)
+![JevRepoTriage 审阅工作台](docs/screenshots/workspace.png)
 
 ## 首版功能
 
