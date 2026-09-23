@@ -19,6 +19,7 @@ export const zhCN: Record<MessageKey, string> = {
   chooseRepo: '先连接仓库',
   searchConnectedRepos: '搜索已连接仓库',
   searchAvailableRepos: '搜索可用仓库',
+  keyRequiredToConnect: '先保存自己的 Jev Key，才能连接仓库。',
   loadingRepos: '正在加载仓库…',
   searchReposPlaceholder: '输入所有者或仓库名称…',
   repoSearchPrompt: '共有 {count} 个可访问仓库。搜索名称后连接。',

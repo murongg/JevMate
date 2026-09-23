@@ -137,6 +137,9 @@ export default function Account({
               {t('refreshRepos')}
             </button>
           </div>
+          {!session.keyConfigured && (
+            <p className="connection-requirement">{t('keyRequiredToConnect')}</p>
+          )}
           {!!repos.length && (
             <div className="available-repository-search">
               <label htmlFor="available-repositories">{t('searchAvailableRepos')}</label>

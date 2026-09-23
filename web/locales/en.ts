@@ -19,6 +19,7 @@ export const en = {
   chooseRepo: 'Connect a repository',
   searchConnectedRepos: 'Search connected repositories',
   searchAvailableRepos: 'Search available repositories',
+  keyRequiredToConnect: 'Save your Jev key before connecting a repository.',
   loadingRepos: 'Loading repositories…',
   searchReposPlaceholder: 'Search by owner or repository name…',
   repoSearchPrompt: '{count} accessible repositories. Search by name to connect one.',

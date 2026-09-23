@@ -1906,6 +1906,9 @@ fieldset:disabled .labels label {
   gap: 6px;
   font-size: 12px;
 }
+.account-columns .connection-requirement {
+  color: #e6c980;
+}
 .available-repository-search {
   margin-top: 18px;
 }
