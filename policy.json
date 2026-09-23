@@ -1,0 +1,35 @@
+{
+  "categories": {
+    "bug": {
+      "description": "An existing feature does not behave as documented or expected.",
+      "label": "bug"
+    },
+    "enhancement": {
+      "description": "A request for a new feature or improvement.",
+      "label": "enhancement"
+    },
+    "question": {
+      "description": "A usage or troubleshooting question without clear evidence of a defect.",
+      "label": "question"
+    },
+    "documentation": {
+      "description": "Missing, incorrect or unclear documentation.",
+      "label": "documentation"
+    },
+    "other": {
+      "description": "None of the other categories, or insufficient evidence.",
+      "label": null
+    }
+  },
+  "modules": {
+    "frontend": {
+      "description": "Browser UI, layout, accessibility or client interactions.",
+      "label": null
+    },
+    "backend": { "description": "Server API, authentication or persistence.", "label": null },
+    "tooling": { "description": "Build, development tools or CI.", "label": null },
+    "unknown": { "description": "Insufficient evidence or no matching module.", "label": null }
+  },
+  "missingInfoLabel": "needs-info",
+  "missingBelow": 0.35
+}

@@ -1,0 +1,9 @@
+# Copy to .dev.vars, which is ignored by Git. Never commit real credentials.
+ADMIN_TOKEN=""
+WEBHOOK_SECRET=""
+TYPESAFE_API_KEY=""
+GITHUB_PRIVATE_KEY=""
+GITHUB_APP_ID=""
+GITHUB_INSTALLATION_ID=""
+ALLOWED_REPOS=""
+JEV_MODEL="jev-latest"

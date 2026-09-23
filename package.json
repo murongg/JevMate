@@ -1,0 +1,46 @@
+{
+  "name": "jevmate",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A self-hosted GitHub issue triage assistant powered by Jev on Cloudflare Workers",
+  "license": "MIT",
+  "scripts": {
+    "dev": "npm run build:web && wrangler dev",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run typecheck && npm test && npm run build",
+    "build": "npm run build:web && wrangler deploy --dry-run --outdir dist/worker",
+    "deploy": "npm run build:web && wrangler deploy",
+    "db:local": "wrangler d1 migrations apply DB --local",
+    "db:remote": "wrangler d1 migrations apply DB --remote",
+    "dev:web": "vite --host 127.0.0.1",
+    "build:web": "vite build",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
+  },
+  "dependencies": {
+    "jose": "^6.2.12",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260923.1",
+    "@testing-library/react": "^16.3.3",
+    "@types/node": "^26.6.2",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "happy-dom": "^20.14.5",
+    "miniflare": "^5.20260921.0-alpha",
+    "prettier": "^3.9.8",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.0",
+    "vitest": "^5.0.1",
+    "wrangler": "^4.136.3"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

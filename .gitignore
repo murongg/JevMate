@@ -1,0 +1,15 @@
+node_modules/
+.wrangler/
+dist/
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+.env*
+*.pem
+coverage/
+docs/plans/
+docs/specs/
+.impeccable/review/
+
+.DS_Store
+.impeccable/build/
