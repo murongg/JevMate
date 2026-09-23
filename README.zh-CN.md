@@ -1,6 +1,18 @@
-# JevMate
+<p align="center">
+  <img src="docs/brand/github-app-logo.png" alt="JevMate 像素机器人 Logo" width="112" height="112" />
+</p>
 
-基于 **Jev** 的开源 GitHub Issue 分诊助手，可部署到自己的 Cloudflare 账户。
+<h1 align="center">JevMate</h1>
+
+<p align="center">基于 <strong>Jev</strong> 的开源 GitHub Issue 分诊助手，可部署到自己的 Cloudflare 账户。</p>
+
+<p align="center">
+  <a href="https://github.com/murongg/JevMate/actions/workflows/ci.yml"><img src="https://github.com/murongg/JevMate/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI 状态" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/murongg/JevMate" alt="开源协议" /></a>
+  <a href="https://github.com/murongg/JevMate/stargazers"><img src="https://img.shields.io/github/stars/murongg/JevMate" alt="GitHub Stars" /></a>
+  <a href="https://developers.cloudflare.com/workers/"><img src="https://img.shields.io/badge/Cloudflare-Workers-F38020?logo=cloudflare&amp;logoColor=white" alt="Cloudflare Workers" /></a>
+  <a href="https://typesafe.ai/"><img src="https://img.shields.io/badge/Powered%20by-Jev-b7ef70" alt="由 Jev 驱动" /></a>
+</p>
 
 Jev 负责判断类型、模块和信息完整度；维护者查看原文、修改建议并确认后，JevMate 才会给 Issue 添加标签。
 
@@ -17,10 +29,19 @@ Jev 负责判断类型、模块和信息完整度；维护者查看原文、修�
 - 使用 Queues 异步分析，支持失败重试与手动重新入队。
 - React 管理页：查看建议、核对原文、调整标签、确认应用、跳过、查看历史。
 - 按页导入历史 Issue；每个 GitHub 页面最多 25 条，排除其中的 PR。
-- 指定仓库白名单；一套部署对应一个 GitHub App 安装。
+- GitHub 登录、独立个人工作区、每个用户自带 Jev Key，密钥加密保存。
+- 支持多个 App 安装和仓库，也保留管理员令牌模式。
 - 保留已有标签；应用前核对正文是否变化；失败重试保持原先确认的标签集合。
 
-首版采用人工确认模式，不自动评论、关闭 Issue 或修改代码。不含重复检测、PR 审查、多用户账号与计费系统。Jev 是外部服务，需要自行申请 API 访问权限。本项目不是 TypeSafe 或 GitHub 官方产品。
+首版采用人工确认模式，不自动评论、关闭 Issue 或修改代码。不含重复检测、PR 审查、团队工作区与统一计费系统。Jev 是外部服务，需要自行申请 API 访问权限。本项目不是 TypeSafe 或 GitHub 官方产品。
+
+## 多用户使用
+
+按[公开登录配置](docs/deployment.md#public-github-login)启用 GitHub 登录后，任何 GitHub 用户都可以登录，填写自己的 Jev Key，安装 App 并连接仓库。每个个人工作区最多连接 100 个仓库，默认每天（UTC）最多执行 200 次模型分析。
+
+仓库权限取用户权限与 App 安装权限的交集，应用标签使用该用户的 GitHub 授权。多人连接同一仓库时，分析记录和 Jev 费用各自独立；确认应用后会修改同一个 GitHub Issue。Cloudflare 费用由部署者承担。
+
+旧管理员模式的数据不会自动分配给第一个登录用户。旧表会保留，个人工作区可重新导入 Issue。
 
 ## 本地运行
 

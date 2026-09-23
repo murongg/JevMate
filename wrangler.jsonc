@@ -5,6 +5,10 @@
   "compatibility_date": "2026-09-01",
   "assets": { "directory": "./dist/client", "binding": "ASSETS", "run_worker_first": true },
   "vars": {
+    "AUTH_MODE": "legacy",
+    "APP_URL": "",
+    "GITHUB_APP_SLUG": "",
+    "DAILY_ANALYSIS_LIMIT": "200",
     "GITHUB_APP_ID": "",
     "GITHUB_INSTALLATION_ID": "",
     "ALLOWED_REPOS": "",

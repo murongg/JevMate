@@ -4,8 +4,12 @@ import { githubIssue, HttpError, type Env, type Issue } from './schema';
 
 export class GitHub {
   private token?: string;
-  constructor(private env: Env) {}
+  constructor(
+    private env: Env,
+    private userToken?: string,
+  ) {}
   private async installationToken(): Promise<string> {
+    if (this.userToken) return this.userToken;
     if (this.token) return this.token;
     if (
       !/^\d+$/.test(this.env.GITHUB_INSTALLATION_ID) ||

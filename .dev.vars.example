@@ -7,3 +7,13 @@ GITHUB_APP_ID=""
 GITHUB_INSTALLATION_ID=""
 ALLOWED_REPOS=""
 JEV_MODEL="jev-latest"
+
+# Optional public GitHub login (leave legacy for admin-token deployments).
+AUTH_MODE="legacy"
+APP_URL=""
+GITHUB_APP_SLUG=""
+GITHUB_CLIENT_ID=""
+GITHUB_CLIENT_SECRET=""
+# Generate with: openssl rand -hex 32. Keep this stable to decrypt saved credentials.
+CREDENTIAL_KEY=""
+DAILY_ANALYSIS_LIMIT="200"

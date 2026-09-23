@@ -1,10 +1,15 @@
 import type { Call, Config, Review, Snapshot } from './types';
 import type { Job } from '../src/schema';
-export function client(token: string): Call {
+export function client(token: string, csrf?: string): Call {
   return async <T>(path: string, body?: unknown): Promise<T> => {
     const res = await fetch(path, {
       method: body === undefined ? 'GET' : 'POST',
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      credentials: 'same-origin',
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(csrf && body !== undefined ? { 'X-CSRF-Token': csrf } : {}),
+        'Content-Type': 'application/json',
+      },
       ...(body === undefined ? {} : { body: JSON.stringify(body) }),
       signal: AbortSignal.timeout(60000),
     });

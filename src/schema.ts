@@ -2,7 +2,7 @@ import { z } from 'zod';
 
 export interface Env {
   DB: D1Database;
-  TASKS: Queue<{ id: string }>;
+  TASKS: Queue<{ id: string; kind?: 'account' | 'event' }>;
   ASSETS: Fetcher;
   ADMIN_TOKEN: string;
   WEBHOOK_SECRET: string;
@@ -12,6 +12,13 @@ export interface Env {
   ALLOWED_REPOS: string;
   TYPESAFE_API_KEY: string;
   JEV_MODEL: string;
+  AUTH_MODE?: 'legacy' | 'github';
+  APP_URL?: string;
+  GITHUB_CLIENT_ID?: string;
+  GITHUB_CLIENT_SECRET?: string;
+  GITHUB_APP_SLUG?: string;
+  CREDENTIAL_KEY?: string;
+  DAILY_ANALYSIS_LIMIT?: string;
 }
 export const repository = z
   .string()

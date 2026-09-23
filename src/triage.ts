@@ -148,3 +148,14 @@ export async function evaluate(issue: Issue, p: Policy, env: Env): Promise<Decis
     throw new HttpError(502, 'Jev returned an invalid decision. No labels were applied.');
   }
 }
+
+export async function accountFingerprint(
+  userId: string,
+  repoId: string,
+  number: number,
+  title: string,
+  body: string,
+) {
+  // Reuse the SHA-256 hex format, with immutable GitHub IDs instead of mutable repository names.
+  return fingerprint(userId + ':' + repoId, number, title, body);
+}

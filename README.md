@@ -1,6 +1,18 @@
-# JevMate
+<p align="center">
+  <img src="docs/brand/github-app-logo.png" alt="JevMate pixel robot logo" width="112" height="112" />
+</p>
 
-A self-hosted GitHub issue triage assistant powered by **Jev**, built with React and Cloudflare Workers.
+<h1 align="center">JevMate</h1>
+
+<p align="center">A self-hosted GitHub issue triage assistant powered by <strong>Jev</strong>, built with React and Cloudflare Workers.</p>
+
+<p align="center">
+  <a href="https://github.com/murongg/JevMate/actions/workflows/ci.yml"><img src="https://github.com/murongg/JevMate/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI status" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/murongg/JevMate" alt="License" /></a>
+  <a href="https://github.com/murongg/JevMate/stargazers"><img src="https://img.shields.io/github/stars/murongg/JevMate" alt="GitHub stars" /></a>
+  <a href="https://developers.cloudflare.com/workers/"><img src="https://img.shields.io/badge/Cloudflare-Workers-F38020?logo=cloudflare&amp;logoColor=white" alt="Cloudflare Workers" /></a>
+  <a href="https://typesafe.ai/"><img src="https://img.shields.io/badge/Powered%20by-Jev-b7ef70" alt="Powered by Jev" /></a>
+</p>
 
 [中文文档](README.zh-CN.md) · [Deployment](docs/deployment.md) · [Contributing](CONTRIBUTING.md)
 
@@ -20,10 +32,11 @@ A dark Bot operator console with a pixel robot identity, compact issue review, a
 - Jev Choice decisions plus independent completeness checks.
 - React inbox with original text, model confidence, label selection, dismissal, and history.
 - Import existing open issues, one GitHub page at a time (25 entries including PRs; PRs are skipped).
-- Explicit repository allowlist and one GitHub App installation per deployment.
+- Public GitHub sign-in, isolated personal workspaces and encrypted per-user Jev keys.
+- Multiple App installations and repositories; optional legacy admin-token mode.
 - Additive label updates, content freshness checks, and stable retry behavior after uncertain write failures.
 
-This is an early MVP. There is no automatic commenting, issue closing, duplicate detection, PR review, user account system, or automatic labeling. The source is open; Jev is an external hosted model and requires your own API access. JevMate is an independent community project, not an official TypeSafe or GitHub product.
+This is an early MVP. There is no automatic commenting, issue closing, duplicate detection, PR review, team billing, or automatic labeling. The source is open; Jev is an external hosted model and requires your own API access. JevMate is an independent community project, not an official TypeSafe or GitHub product.
 
 ## Architecture
 
@@ -35,7 +48,13 @@ GitHub App → Worker (signature verification) → Queues
 React inbox → authenticated Worker API → review / apply labels
 ```
 
-The frontend and API deploy together as one Worker with Static Assets. D1 stores issue snapshots, decisions, job states, and approved labels. A single admin token grants access to all repositories configured in that deployment; do not treat this as a multi-tenant service.
+The frontend and API deploy together as one Worker with Static Assets. D1 stores issue snapshots, decisions, job states, and approved labels. GitHub mode isolates users, checks current GitHub access and calls Jev with each user’s key. The optional legacy mode uses one admin token for all allowlisted repositories.
+
+## GitHub accounts
+
+Enable [GitHub login](docs/deployment.md#public-github-login) to let anyone sign in, save their own Jev key, install the App and connect repositories. Each personal workspace supports up to 100 connected repositories. Access is limited to the intersection of the user’s GitHub access and the App’s installations; label writes use the user’s token.
+
+By default, each user can request 200 model analyses per UTC day. Jev bills the supplied key; the operator pays Cloudflare costs. Connecting the same repository in two workspaces creates independent histories and analysis charges. Labels still modify the shared GitHub issue after explicit approval.
 
 ## Run locally
 
@@ -50,7 +69,7 @@ npm run dev
 
 Set a random `ADMIN_TOKEN` of at least 32 characters in `.dev.vars` to open the inbox at `http://localhost:8787`. A blank allowlist gives an empty inbox. Configure GitHub/Jev credentials before importing or analyzing real issues.
 
-For React hot reload, keep the Worker running and use `npm run dev:web` in a second terminal; Vite proxies `/api` to port 8787.
+For React hot reload, keep the Worker running and use `npm run dev:web` in a second terminal; Vite proxies `/api` and `/auth` to port 8787. GitHub login should be tested at the configured `APP_URL` origin.
 
 ## Deploy
 
@@ -95,7 +114,7 @@ Tests use synthetic fixtures, mock external APIs, and a local Miniflare D1 datab
 
 ## Data and access
 
-Issue titles and bodies are sent to TypeSafe for analysis and stored in your D1 database. Private repositories need the same consideration as any other third-party model integration. API tokens and App keys stay in Worker secrets. The admin token is kept only in the current page's memory, not browser storage. Refreshing the page signs you out. Issue bodies render as plain text to prevent embedded HTML execution.
+Issue titles and bodies are sent to TypeSafe for analysis and stored in your D1 database. Private repositories need the same consideration as any other third-party model integration. GitHub user tokens and Jev keys are encrypted in D1 with a Worker encryption secret. GitHub sessions use a Secure, HttpOnly cookie and last up to seven days; revocation invalidates them. The legacy admin token stays in page memory and is cleared on refresh. Issue bodies render as plain text to prevent embedded HTML execution.
 
 Revoking repository access or changing the allowlist stops new operations but does not delete stored records. Remove retained data deliberately if your retention policy requires it. The MVP has no automatic retention schedule.
 
