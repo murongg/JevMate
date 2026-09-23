@@ -36,13 +36,13 @@ Geist Variable is the reading and heading face. Geist Mono Variable is reserved 
 
 ## Layout
 
-Desktop has a 225px navigation rail, a compact context bar, a header and an edge-to-edge list/detail workspace. At 1150px the rail narrows to 195px. Above 1650px the issue index is 380px. The header exposes language, refresh and import controls; the import form is initially collapsed and closes after a successful enqueue.
+Navigation lives in the top command bar. Workspace scope filters sit above the review surface rather than in a left sidebar. The main view has three functional columns: an issue queue, original report, and a Bot assessment/action panel. At typical desktop widths the queue is 270px and Bot panel 300px; the report fills the remaining space. Above 1500px they expand to 300px and 340px. The Bot panel stays sticky while reviewing longer reports.
 
-At 800px and below, navigation becomes a horizontally scrollable row. List and detail are separate views. Completing a review returns to the list and focuses search, preserving the previous regression fix. Source prose stays readable, wraps long content and scrolls within its bounded area. Inputs use 16px text on mobile.
+At 1000px and below, report and Bot panel stack. At 800px and below, the queue and detail become separate views. Completing a review returns to the queue and focuses search. The source section precedes Bot decisions in both DOM and mobile reading order; selected issue identity drives both together. Import controls remain collapsed by default and open on demand.
 
 ## Connection page
 
-A two-column layout pairs the pixel bot and “The bot sorts. You decide.” with a terminal-framed authentication panel. The event → decision → approval sequence describes the real product workflow. It contains no sample performance claims, fabricated telemetry or fake terminal output. Mobile stacks story and connection form.
+A centered boot terminal replaces the previous two-column entry page. A compact pixel Bot and headline sit directly above the authentication panel; the header contains the brand and language control. The single vertical path keeps the login action close to its context on desktop and mobile. It contains no fabricated telemetry or performance claims.
 
 ## Assessment and action
 

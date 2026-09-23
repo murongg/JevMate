@@ -52,7 +52,7 @@ export const zhCN: Record<MessageKey, string> = {
   requeued: '任务已重新入队。',
   issueReview: 'Issue 审阅',
   search: '搜索当前页',
-  searchPlaceholder: '搜索标题、仓库或编号',
+  searchPlaceholder: '搜索当前页…',
   pageCount: '本页 {count} 条',
   pageNumber: '第 {page} 页',
   manualJudgment: '需人工判断',

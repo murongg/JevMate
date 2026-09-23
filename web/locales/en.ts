@@ -52,7 +52,7 @@ export const en = {
   requeued: 'Task requeued.',
   issueReview: 'Issue review',
   search: 'Search this page',
-  searchPlaceholder: 'Search title, repository or number',
+  searchPlaceholder: 'Search this page…',
   pageCount: 'On this page: {count}',
   pageNumber: 'Page {page}',
   manualJudgment: 'Needs manual judgment',

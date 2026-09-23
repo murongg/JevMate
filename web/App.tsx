@@ -172,64 +172,22 @@ function Workspace() {
   const count = data.items.filter((item) => ['pending', 'applying'].includes(item.status)).length;
   return (
     <div className="shell">
-      <aside className="sidebar">
+      <header className="commandbar">
         <Brand />
-        <div className="instance-card">
+        <div className="workspace-context">
+          <span className="context-divider" />
           <Icon name="repo" />
-          <div>
-            <span>{t('workspaceLabel')}</span>
-            <strong>{data.config.repos[0]?.split('/')[0] || 'JevMate'}</strong>
-          </div>
-          <span className="instance-dot" />
+          <span>{data.config.repos[0]?.split('/')[0] || 'JevMate'}</span>
+          <span className="context-path">/ {t('workspaceLabel')}</span>
         </div>
-        <p className="sidebar-description">{t('reviewQueue')}</p>
-        <nav aria-label={t('viewScope')}>
-          {[
-            ['pending', t('pending')],
-            ['all', t('allRecords')],
-            ['applied', t('applied')],
-            ['dismissed', t('dismissed')],
-          ].map(([value, name]) => (
-            <button
-              key={value}
-              className={filter === value ? 'active' : ''}
-              aria-pressed={filter === value}
-              onClick={() => {
-                setFilter(value);
-                setMobileDetail(false);
-              }}
-            >
-              <Icon
-                name={
-                  value === 'all'
-                    ? 'all'
-                    : value === 'pending'
-                      ? 'pending'
-                      : value === 'applied'
-                        ? 'applied'
-                        : 'dismissed'
-                }
-              />
-              <span className="nav-name">{name}</span>
-              {value === 'pending' && <span className="nav-count">{count}</span>}
-            </button>
-          ))}
-        </nav>
-        <div className="sidebar-foot">
-          <div className="sidebar-bot">
-            <Bot />
-            <div>
-              <strong>Jev</strong>
-              <span>{t('connectedShort')}</span>
-            </div>
-            <span className="instance-dot" />
-          </div>
-          <p>
-            {t('judgment')}
-            <br />
-            {t('decision')}
-          </p>
+        <div className="commandbar-tools">
+          <span className="connection-mode">
+            <span className="live-indicator" />
+            {t('manualMode')}
+          </span>
+          <Language />
           <button
+            className="signout-button"
             disabled={busy}
             onClick={() => {
               setApi(null);
@@ -237,26 +195,15 @@ function Workspace() {
               setError('');
               setNotice(null);
               setSelected(null);
+              setMobileDetail(false);
             }}
           >
             <Icon name="arrow" />
             {t('signOut')}
           </button>
         </div>
-      </aside>
+      </header>
       <main className="workspace">
-        <div className="workspace-topbar">
-          <div>
-            <Icon name="repo" />
-            <span>JevMate</span>
-            <span className="path-separator">/</span>
-            <strong>{t('console')}</strong>
-          </div>
-          <div>
-            <span className="live-indicator" />
-            {t('manualMode')}
-          </div>
-        </div>
         <header className="workspace-header">
           <div>
             <h1>
@@ -268,7 +215,6 @@ function Workspace() {
             <p>{t('inboxIntro')}</p>
           </div>
           <div className="workspace-tools">
-            <Language />
             <button className="refresh-button" disabled={busy} onClick={() => run(async () => {})}>
               <Icon name="refresh" className={busy ? 'spin' : ''} />
               {busy ? t('syncing') : t('refresh')}
@@ -284,6 +230,45 @@ function Workspace() {
             </button>
           </div>
         </header>
+        <div className="scopebar">
+          {' '}
+          <nav aria-label={t('viewScope')}>
+            {[
+              ['pending', t('pending')],
+              ['all', t('allRecords')],
+              ['applied', t('applied')],
+              ['dismissed', t('dismissed')],
+            ].map(([value, name]) => (
+              <button
+                key={value}
+                className={filter === value ? 'active' : ''}
+                aria-pressed={filter === value}
+                onClick={() => {
+                  setFilter(value);
+                  setMobileDetail(false);
+                }}
+              >
+                <Icon
+                  name={
+                    value === 'all'
+                      ? 'all'
+                      : value === 'pending'
+                        ? 'pending'
+                        : value === 'applied'
+                          ? 'applied'
+                          : 'dismissed'
+                  }
+                />
+                <span className="nav-name">{name}</span>
+                {value === 'pending' && <span className="nav-count">{count}</span>}
+              </button>
+            ))}
+          </nav>
+          <span className="model-badge">
+            <Bot />
+            {data.config.model}
+          </span>
+        </div>
         {importOpen && (
           <form
             id="import-panel"
