@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import type { Review as Item } from './types';
 import { useI18n } from './I18n';
+import Icon from './Icon';
+import Signal from './Signal';
+import Bot from './Bot';
 export default function Review({
   item,
   labels,
@@ -16,7 +19,7 @@ export default function Review({
   onDismiss: () => void;
   onBack: () => void;
 }) {
-  const { t, label, percent, list } = useI18n();
+  const { t, label, list } = useI18n();
   const [selected, setSelected] = useState(item.chosen || item.decision.labels);
   const pending = item.status === 'pending',
     retry = item.status === 'applying';
@@ -26,41 +29,58 @@ export default function Review({
     <article className="review" aria-label={t('issueDetails')}>
       <div className="review-heading">
         <button className="back" onClick={onBack}>
+          <Icon name="previous" />
           {t('back')}
         </button>
-        <span className={`status ${item.status}`}>{label('status', item.status)}</span>
+        <span className={`status ${item.status}`}>
+          <span className="status-dot" />
+          {label('status', item.status)}
+        </span>
         <a
           href={`https://github.com/${item.repo}/issues/${item.number}`}
           target="_blank"
           rel="noreferrer"
         >
           {t('viewGithub')}
+          <Icon name="external" />
         </a>
       </div>
       <p className="reference">
+        <Icon name="repo" />
         {item.repo} <span>#{item.number}</span>
       </p>
       <h2>{item.title}</h2>
+      <div className="assessment-heading">
+        <Bot />
+        <span>{t('decisionLabel')}</span>
+        <span className="assessment-model">{model}</span>
+      </div>
       <div className="judgments">
         <div>
           <span>{t('category')}</span>
           <strong>{label('name', category.choice)}</strong>
-          <small>{t('confidence', { value: percent(category.confidence) })}</small>
+          <Signal value={category.confidence} />
         </div>
         <div>
           <span>{t('module')}</span>
           <strong>{label('name', module.choice)}</strong>
-          <small>{t('confidence', { value: percent(module.confidence) })}</small>
+          <Signal value={module.confidence} />
         </div>
       </div>
       {missing.length > 0 && (
         <div className="missing">
-          <strong>{t('missingInfo')}</strong>
+          <strong>
+            <Icon name="pending" />
+            {t('missingInfo')}
+          </strong>
           <p>{t('verifyMissing', { fields: list(missing.map((key) => label('name', key))) })}</p>
         </div>
       )}
       <section className="source">
-        <h3>{t('originalIssue')}</h3>
+        <h3>
+          <Icon name="repo" />
+          {t('originalIssue')}
+        </h3>
         <pre>{item.body || t('noBody')}</pre>
       </section>
       <section className="decision">
@@ -92,7 +112,7 @@ export default function Review({
                         )
                       }
                     />
-                    {label}
+                    <span>{label}</span>
                   </label>
                 ))}
               </div>
@@ -103,6 +123,7 @@ export default function Review({
                 disabled={busy || selected.length === 0}
                 onClick={() => onApply(selected)}
               >
+                <Icon name="check" />
                 {busy ? t('processing') : retry ? t('retryLabels') : t('confirmAction')}
               </button>
               {pending && (
@@ -117,7 +138,10 @@ export default function Review({
         ) : null}
       </section>
       <footer className="model-note">
-        {model} · {t('inputTokens', { count: inputTokens })}
+        <span className="model-meta">
+          {t('inputTokens', { count: inputTokens })}
+          <span>{t('shortcutHint')}</span>
+        </span>
         <br />
         {t('confidenceHint')}
       </footer>

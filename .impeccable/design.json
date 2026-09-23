@@ -1,105 +1,62 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-23T04:07:35.584775+00:00",
-  "title": "Design System: JevMate",
+  "generatedAt": "2026-09-23T11:16:58.897530+00:00",
+  "title": "JevMate Bot operator console",
   "extensions": {
     "shadows": [
       {
-        "name": "selected-row-outline",
-        "value": "inset 0 0 0 1px #b8d6c0",
-        "purpose": "Outline the selected issue without floating elevation."
+        "name": "selected-row",
+        "value": "inset 3px 0 #b7ef70",
+        "purpose": "Mark the selected issue row."
       }
     ],
     "motion": [
       {
-        "name": "button-hover",
-        "value": "background 0.15s ease-out",
-        "purpose": "Button state feedback; disabled with reduced motion."
-      },
-      {
-        "name": "review-appear",
+        "name": "review-in",
         "value": "0.18s ease-out",
-        "purpose": "Opacity 0.75 to 1 and translateY(3px) to none; disabled with reduced motion."
+        "purpose": "Review entry, disabled with reduced motion."
       }
     ],
     "breakpoints": [
       {
         "name": "compact-desktop",
-        "value": "1100px"
+        "value": "1150px"
       },
       {
         "name": "single-pane",
-        "value": "780px"
+        "value": "800px"
       }
     ]
   },
   "components": [
     {
-      "name": "Primary button",
+      "name": "Primary action",
       "kind": "button",
-      "refersTo": "button-primary",
-      "description": "Explicit confirmation.",
-      "html": "<button class=\"ds-button-primary\">确认并添加标签</button>",
-      "css": ".ds-button-primary {font: 550 15px/1.6 -apple-system, BlinkMacSystemFont, \"Segoe UI\", \"Noto Sans\", sans-serif; border: 1px solid #d1d9e0; border-radius: 6px; min-height: 42px; padding: 8px 15px; cursor: pointer; transition: background .15s ease-out; background:#1a7f37; color:#fff;border-color:#1a7f37;}.ds-button-primary:hover {background:#146c2e;} .ds-button-primary:focus-visible { outline: 3px solid #0969da; outline-offset: 3px; } .ds-button-primary:disabled {opacity:.55; cursor:not-allowed;} @media (prefers-reduced-motion:reduce) { .ds-button-primary {transition:none;} }"
-    },
-    {
-      "name": "Secondary button",
-      "kind": "button",
-      "refersTo": "button-secondary",
-      "description": "Supporting action.",
-      "html": "<button class=\"ds-button-secondary\">刷新数据</button>",
-      "css": ".ds-button-secondary {font: 550 15px/1.6 -apple-system, BlinkMacSystemFont, \"Segoe UI\", \"Noto Sans\", sans-serif; border: 1px solid #d1d9e0; border-radius: 6px; min-height: 42px; padding: 8px 15px; cursor: pointer; transition: background .15s ease-out; background:#fff; color:#1f2328;}.ds-button-secondary:hover {background:#f0f3f6;} .ds-button-secondary:focus-visible { outline: 3px solid #0969da; outline-offset: 3px; } .ds-button-secondary:disabled {opacity:.55; cursor:not-allowed;} @media (prefers-reduced-motion:reduce) { .ds-button-secondary {transition:none;} }"
-    },
-    {
-      "name": "Search field",
-      "kind": "input",
-      "refersTo": "input",
-      "description": "Search within the loaded page.",
-      "html": "<input class=\"ds-input\" aria-label=\"搜索当前页\" placeholder=\"搜索标题、仓库或编号\" type=\"search\">",
-      "css": ".ds-input {font:13px/1.6 -apple-system,BlinkMacSystemFont,\"Segoe UI\",\"Noto Sans\",sans-serif; border:1px solid #d1d9e0; border-radius:6px; padding:9px 11px; background:#fff; color:#1f2328; min-height:42px; caret-color:#1a7f37;} .ds-input::placeholder {color:#687380;} .ds-input:focus-visible { outline: 3px solid #0969da; outline-offset: 3px; }"
-    },
-    {
-      "name": "Pending status",
-      "kind": "chip",
-      "refersTo": "status-pending",
-      "description": "Attention with a textual status.",
-      "html": "<span class=\"ds-status\">待确认</span>",
-      "css": ".ds-status {display:inline-block; font:12px/1.6 -apple-system,BlinkMacSystemFont,\"Segoe UI\",\"Noto Sans\",sans-serif; border-radius:4px; padding:3px 9px; background:#fff5d9; color:#795b0b;}"
-    },
-    {
-      "name": "Inbox surface",
-      "kind": "card",
-      "refersTo": "inbox",
-      "description": "Flat bordered workspace containing list and evidence.",
-      "html": "<section class=\"ds-inbox\" aria-label=\"Issue 审阅\"></section>",
-      "css": ".ds-inbox {background:#fff; border:1px solid #d1d9e0; border-radius:9px; min-height:180px; overflow:hidden;}"
-    },
-    {
-      "name": "Active scope",
-      "kind": "nav",
-      "description": "Current scope is both colored and semantically selected.",
-      "html": "<nav aria-label=\"查看范围\"><button class=\"ds-nav\" aria-pressed=\"true\">待确认</button></nav>",
-      "css": ".ds-nav {font: 550 15px/1.6 -apple-system, BlinkMacSystemFont, \"Segoe UI\", \"Noto Sans\", sans-serif; border: 1px solid #d1d9e0; border-radius: 6px; min-height: 42px; padding: 8px 15px; cursor: pointer; transition: background .15s ease-out;background:#eaf4ed; color:#17662e; border-color:transparent;} .ds-nav:hover {background:#f0f3f6;} .ds-nav:focus-visible { outline: 3px solid #0969da; outline-offset: 3px; }"
+      "description": "Explicit human confirmation.",
+      "html": "<button class=\"ds-primary\">Confirm and add labels</button>",
+      "css": ".ds-primary {font:650 12px/1.6 sans-serif;min-height:40px;padding:9px 14px;border:1px solid #b7ef70;border-radius:3px;background:#b7ef70;color:#18220e;} .ds-primary:focus-visible {outline:2px solid #b7ef70;outline-offset:4px;}"
     }
   ],
   "narrative": {
-    "northStar": "The review desk",
-    "overview": "A quiet operational workspace for reading issue evidence and explicitly confirming labels.",
+    "northStar": "Bot operator console",
+    "overview": "A distinctive bot-native console with explicit human approval.",
     "keyCharacteristics": [
-      "Flat white surfaces and visible seams",
-      "Persistent desktop index",
-      "Single-pane mobile review",
-      "Explicit human confirmation"
+      "Dark opaque surfaces",
+      "Pixel robot identity",
+      "Real confidence signals",
+      "Monospaced metadata",
+      "Readable source evidence"
     ],
     "rules": [],
     "dos": [
-      "Keep source evidence before confirmation.",
-      "Return to the mobile list after successful actions.",
-      "Label confidence as model uncertainty."
+      "Keep operational data real.",
+      "Keep source evidence before approval.",
+      "Preserve English and Chinese."
     ],
     "donts": [
-      "Do not equate confidence with correctness.",
-      "Do not render issue content as trusted HTML."
+      "Do not simulate fake telemetry.",
+      "Do not obscure text with CRT effects.",
+      "Do not treat confidence as accuracy."
     ]
   }
 }

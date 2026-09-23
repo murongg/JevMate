@@ -4,21 +4,10 @@ import Review from './Review';
 import { I18nProvider, useI18n, type Message } from './I18n';
 import Language from './Language';
 import type { Call, Snapshot } from './types';
+import Brand from './Brand';
+import Bot from './Bot';
+import Icon from './Icon';
 
-function Mark() {
-  return (
-    <svg className="mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-      <rect width="32" height="32" rx="8" fill="currentColor" />
-      <path
-        d="M9 10v8a5 5 0 0 0 10 0v-8M19 18l4-5"
-        stroke="white"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
 export default function App() {
   return (
     <I18nProvider>
@@ -40,6 +29,7 @@ function Workspace() {
   const [repo, setRepo] = useState(''),
     [scanPage, setScanPage] = useState(1),
     [mobileDetail, setMobileDetail] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
   function returnToList() {
     // Completing a review must not replace its action buttons with another issue below the fold.
     setMobileDetail(false);
@@ -83,42 +73,90 @@ function Workspace() {
     return (
       <main className="login-page">
         <header className="login-header">
-          <div className="login-brand">
-            <Mark />
-            <span>JevMate</span>
+          <Brand />
+          <div className="login-header-tools">
+            <span className="console-label">{t('console')}</span>
+            <Language />
           </div>
-          <Language />
         </header>
-        <section className="login-panel">
-          <h1>
-            {t('loginHeading')}
-            <br />
-            {t('loginHeadingEnd')}
-          </h1>
-          <p>{t('loginIntro')}</p>
-          <form onSubmit={login}>
-            <label htmlFor="token">{t('adminToken')}</label>
-            <input
-              id="token"
-              type="password"
-              value={token}
-              onChange={(e) => setToken(e.target.value)}
-              required
-              minLength={32}
-              autoComplete="off"
-              placeholder={t('tokenPlaceholder')}
-            />
-            <small>{t('tokenHint')}</small>
-            {error && (
-              <div role="alert" className="error">
-                {localizeError(error)}
+        <div className="login-body">
+          <section className="login-story">
+            <div className="bot-stage">
+              <span className="stage-corner tl" />
+              <span className="stage-corner tr" />
+              <Bot />
+              <span className="stage-corner bl" />
+              <span className="stage-corner br" />
+              <span className="bot-caption">JEV / ISSUE TRIAGE</span>
+            </div>
+            <h1>
+              {t('loginHeading')}
+              <br />
+              <span>{t('loginHeadingEnd')}</span>
+            </h1>
+            <p>{t('loginIntro')}</p>
+            <div className="flow">
+              <span>
+                <Icon name="repo" />
+                {t('flowInput')}
+              </span>
+              <Icon name="arrow" />
+              <span>
+                <Bot />
+                {t('flowModel')}
+              </span>
+              <Icon name="arrow" />
+              <span>
+                <Icon name="check" />
+                {t('flowReview')}
+              </span>
+            </div>
+          </section>
+          <section className="login-panel">
+            <div className="panel-terminal">
+              <span className="terminal-dot" />
+              <span>jevmate / connect</span>
+              <span className="terminal-version">v0.1</span>
+            </div>
+            <div className="login-panel-body">
+              <div className="login-access-icon">
+                <Icon name="repo" />
               </div>
-            )}
-            <button className="primary" disabled={busy}>
-              {busy ? t('connecting') : t('openWorkspace')}
-            </button>
-          </form>
-        </section>
+              <h2>{t('loginAccess')}</h2>
+              <p>{t('loginAccessHint')}</p>
+              <form onSubmit={login}>
+                <label htmlFor="token">{t('adminToken')}</label>
+                <div className="token-input">
+                  <span aria-hidden="true">&gt;</span>
+                  <input
+                    id="token"
+                    type="password"
+                    value={token}
+                    onChange={(e) => setToken(e.target.value)}
+                    required
+                    minLength={32}
+                    autoComplete="off"
+                    placeholder={t('tokenPlaceholder')}
+                  />
+                </div>
+                <small>{t('tokenHint')}</small>
+                {error && (
+                  <div role="alert" className="error">
+                    {localizeError(error)}
+                  </div>
+                )}
+                <button className="primary" disabled={busy}>
+                  {busy ? t('connecting') : t('openWorkspace')}
+                  <Icon name="arrow" />
+                </button>
+              </form>
+            </div>
+            <div className="login-panel-foot">
+              <Icon name="check" />
+              <span>{t('loginNote')}</span>
+            </div>
+          </section>
+        </div>
         <footer>{t('loginFooter')}</footer>
       </main>
     );
@@ -135,11 +173,16 @@ function Workspace() {
   return (
     <div className="shell">
       <aside className="sidebar">
-        <div className="brand">
-          <Mark />
-          <span>JevMate</span>
+        <Brand />
+        <div className="instance-card">
+          <Icon name="repo" />
+          <div>
+            <span>{t('workspaceLabel')}</span>
+            <strong>{data.config.repos[0]?.split('/')[0] || 'JevMate'}</strong>
+          </div>
+          <span className="instance-dot" />
         </div>
-        <p className="sidebar-description">{t('sidebarDescription')}</p>
+        <p className="sidebar-description">{t('reviewQueue')}</p>
         <nav aria-label={t('viewScope')}>
           {[
             ['pending', t('pending')],
@@ -156,13 +199,31 @@ function Workspace() {
                 setMobileDetail(false);
               }}
             >
-              {name}
-              {value === 'pending' && <span>{count}</span>}
+              <Icon
+                name={
+                  value === 'all'
+                    ? 'all'
+                    : value === 'pending'
+                      ? 'pending'
+                      : value === 'applied'
+                        ? 'applied'
+                        : 'dismissed'
+                }
+              />
+              <span className="nav-name">{name}</span>
+              {value === 'pending' && <span className="nav-count">{count}</span>}
             </button>
           ))}
         </nav>
         <div className="sidebar-foot">
-          <span className="connection">{t('connected')}</span>
+          <div className="sidebar-bot">
+            <Bot />
+            <div>
+              <strong>Jev</strong>
+              <span>{t('connectedShort')}</span>
+            </div>
+            <span className="instance-dot" />
+          </div>
           <p>
             {t('judgment')}
             <br />
@@ -178,66 +239,98 @@ function Workspace() {
               setSelected(null);
             }}
           >
+            <Icon name="arrow" />
             {t('signOut')}
           </button>
         </div>
       </aside>
       <main className="workspace">
+        <div className="workspace-topbar">
+          <div>
+            <Icon name="repo" />
+            <span>JevMate</span>
+            <span className="path-separator">/</span>
+            <strong>{t('console')}</strong>
+          </div>
+          <div>
+            <span className="live-indicator" />
+            {t('manualMode')}
+          </div>
+        </div>
         <header className="workspace-header">
           <div>
-            <h1>{t('inbox')}</h1>
+            <h1>
+              {t('inbox')}
+              <span className="headline-count" aria-hidden="true">
+                {data.items.length}
+              </span>
+            </h1>
             <p>{t('inboxIntro')}</p>
           </div>
           <div className="workspace-tools">
             <Language />
-            <button disabled={busy} onClick={() => run(async () => {})}>
+            <button className="refresh-button" disabled={busy} onClick={() => run(async () => {})}>
+              <Icon name="refresh" className={busy ? 'spin' : ''} />
               {busy ? t('syncing') : t('refresh')}
+            </button>
+            <button
+              className="import-toggle"
+              aria-expanded={importOpen}
+              aria-controls="import-panel"
+              onClick={() => setImportOpen((open) => !open)}
+            >
+              <Icon name={importOpen ? 'close' : 'download'} />
+              {t('importToggle')}
             </button>
           </div>
         </header>
-        <form
-          className="import-bar"
-          onSubmit={(e) => {
-            e.preventDefault();
-            run(async (call) => {
-              const res = await call<{ queued: number }>('/api/scan', { repo, page: scanPage });
-              return { key: 'queued', params: { count: res.queued } };
-            });
-          }}
-        >
-          <div>
-            <label htmlFor="repo">{t('importIssues')}</label>
-            <select
-              id="repo"
-              value={repo}
-              onChange={(e) => {
-                setRepo(e.target.value);
-                setScanPage(1);
-              }}
-              disabled={!data.config.repos.length}
-            >
-              {data.config.repos.length ? (
-                data.config.repos.map((r) => <option key={r}>{r}</option>)
-              ) : (
-                <option value="">{t('noRepositories')}</option>
-              )}
-            </select>
-          </div>
-          <div className="page-input">
-            <label htmlFor="scan-page">{t('githubPage')}</label>
-            <input
-              id="scan-page"
-              type="number"
-              min="1"
-              max="1000"
-              required
-              value={scanPage}
-              onChange={(e) => setScanPage(Number(e.target.value))}
-            />
-          </div>
-          <button disabled={busy || !repo}>{t('importPage')}</button>
-          <small>{t('importHint')}</small>
-        </form>
+        {importOpen && (
+          <form
+            id="import-panel"
+            className="import-bar"
+            onSubmit={(e) => {
+              e.preventDefault();
+              run(async (call) => {
+                const res = await call<{ queued: number }>('/api/scan', { repo, page: scanPage });
+                setImportOpen(false);
+                return { key: 'queued', params: { count: res.queued } };
+              });
+            }}
+          >
+            <div>
+              <label htmlFor="repo">{t('importIssues')}</label>
+              <select
+                id="repo"
+                value={repo}
+                onChange={(e) => {
+                  setRepo(e.target.value);
+                  setScanPage(1);
+                }}
+                disabled={!data.config.repos.length}
+              >
+                {data.config.repos.length ? (
+                  data.config.repos.map((r) => <option key={r}>{r}</option>)
+                ) : (
+                  <option value="">{t('noRepositories')}</option>
+                )}
+              </select>
+            </div>
+            <div className="page-input">
+              <label htmlFor="scan-page">{t('githubPage')}</label>
+              <input
+                id="scan-page"
+                type="number"
+                min="1"
+                max="1000"
+                required
+                value={scanPage}
+                onChange={(e) => setScanPage(Number(e.target.value))}
+              />
+            </div>
+            <button disabled={busy || !repo}>{t('importPage')}</button>
+            <small>{t('importHint')}</small>
+          </form>
+        )}
         {error && (
           <div role="alert" className="error banner">
             {localizeError(error)}
@@ -294,13 +387,16 @@ function Workspace() {
               <label htmlFor="search" className="sr-only">
                 {t('search')}
               </label>
-              <input
-                id="search"
-                type="search"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder={t('searchPlaceholder')}
-              />
+              <div className="search-input">
+                <Icon name="search" />
+                <input
+                  id="search"
+                  type="search"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder={t('searchPlaceholder')}
+                />
+              </div>
               <div className="list-meta">
                 <span>{t('pageCount', { count: visible.length })}</span>
                 <span>{t('pageNumber', { page: data.page })}</span>
@@ -318,13 +414,23 @@ function Workspace() {
                     }}
                   >
                     <span className="issue-number">
-                      #{item.number}
+                      <span className="issue-id">
+                        <Icon name={item.status === 'applied' ? 'applied' : 'pending'} />#
+                        {item.number}
+                      </span>
                       <span>{label('status', item.status)}</span>
                     </span>
                     <strong>{item.title}</strong>
                     <span className="issue-repo">{item.repo}</span>
                     <span className="suggested">
-                      {item.decision.labels.join(' · ') || t('manualJudgment')}
+                      {item.decision.labels.length
+                        ? item.decision.labels.map((value) => (
+                            <span className="tag" key={value}>
+                              <Icon name="tag" />
+                              {value}
+                            </span>
+                          ))
+                        : t('manualJudgment')}
                     </span>
                   </button>
                 </li>
@@ -338,6 +444,7 @@ function Workspace() {
                 disabled={busy || data.page === 1}
                 onClick={() => run(async () => {}, data.page - 1)}
               >
+                <Icon name="previous" />
                 {t('previous')}
               </button>
               <button
@@ -345,6 +452,7 @@ function Workspace() {
                 onClick={() => run(async () => {}, data.page + 1)}
               >
                 {t('next')}
+                <Icon name="next" />
               </button>
             </div>
           </div>
@@ -373,7 +481,7 @@ function Workspace() {
           ) : (
             <div className="empty">
               <div className="empty-mark">
-                <Mark />
+                <Bot />
               </div>
               <h2>{data.items.length ? t('pageComplete') : t('getStarted')}</h2>
               <p>{data.items.length ? t('historyHint') : t('startHint')}</p>

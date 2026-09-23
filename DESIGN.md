@@ -1,141 +1,65 @@
 ---
 name: JevMate
-description: A self-hosted review desk for GitHub issue triage.
+description: A bot-native operator console for human-reviewed GitHub triage.
 colors:
-  canvas: '#f6f8fa'
-  surface: '#ffffff'
-  ink: '#1f2328'
-  muted: '#59636e'
-  seam: '#d1d9e0'
-  action: '#1a7f37'
-  action-hover: '#146c2e'
-  link-focus: '#0969da'
-  neutral-hover: '#f0f3f6'
-  active-nav: '#eaf4ed'
-  active-ink: '#17662e'
-  selected-row: '#edf6ef'
-  selected-outline: '#b8d6c0'
-  attention: '#fff5d9'
-  attention-ink: '#795b0b'
-  applied: '#dafbe1'
-  retry: '#fff1e5'
-  retry-ink: '#853e0e'
-  error: '#fff1f0'
-  error-ink: '#9b242a'
+  canvas: '#101210'
+  surface: '#161916'
+  ink: '#e5e9e1'
+  muted: '#9aa495'
+  seam: '#30372e'
+  action: '#b7ef70'
+  selected: '#202c18'
+  attention: '#e6c980'
 typography:
   body:
-    fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', sans-serif"
-    fontSize: '15px'
-    lineHeight: 1.6
-  headline:
-    fontSize: '26px'
-    fontWeight: 650
-    letterSpacing: '-0.025em'
-  title:
-    fontSize: '24px'
-    fontWeight: 700
-    lineHeight: 1.45
-    letterSpacing: '-0.02em'
-  source:
+    fontFamily: 'Geist Variable'
     fontSize: '14px'
-    lineHeight: 1.85
-  label:
-    fontSize: '12px'
+  metadata:
+    fontFamily: 'Geist Mono Variable'
+    fontSize: '11px'
 rounded:
-  status: '4px'
-  control: '6px'
-  inbox: '9px'
-spacing:
-  action-gap: '10px'
-  form-gap: '12px'
-  pagination: '16px'
-  list-row: '18px'
-  decision-top: '20px'
-  review-section: '24px'
-components:
-  button-primary:
-    backgroundColor: '{colors.action}'
-    textColor: '{colors.surface}'
-    rounded: '{rounded.control}'
-    padding: '8px 15px'
-  button-primary-hover:
-    backgroundColor: '{colors.action-hover}'
-  button-secondary:
-    backgroundColor: '{colors.surface}'
-    textColor: '{colors.ink}'
-    rounded: '{rounded.control}'
-    padding: '8px 15px'
-  input:
-    backgroundColor: '{colors.surface}'
-    textColor: '{colors.ink}'
-    rounded: '{rounded.control}'
-    padding: '9px 11px'
-  status-pending:
-    backgroundColor: '{colors.attention}'
-    textColor: '{colors.attention-ink}'
-    rounded: '{rounded.status}'
-    padding: '3px 9px'
-  inbox:
-    backgroundColor: '{colors.surface}'
-    rounded: '{rounded.inbox}'
+  control: '3px'
+  label: '2px'
 ---
 
-# Design System: JevMate
+# JevMate — Bot operator console
 
-## Overview
+## Direction
 
-**Creative North Star: “The review desk.”** Mode: Operate. Maintainers scan a persistent issue index, inspect source evidence, adjust suggested labels, and explicitly confirm a decision. Quiet white surfaces, visible seams, and restrained color support reading and comparison. The React interface is implemented directly in code; `web/style.css`, `web/App.tsx`, and `web/Review.tsx` are the implementation reference.
+The user explicitly requested a more bot-like, geeky and distinctive interface. The visual system uses dark charcoal surfaces, phosphor-green controls, a pixel robot identity, monospaced metadata and precise panel seams. It is a functional operator console, not a simulated terminal: every action works, displayed counts come from the loaded data, and confidence cells visualize the model's actual returned confidence.
 
-The direction contract favors a review desk over the considered repository list, email inbox, kanban board, operations log, lab notebook, and search browser. Instrument numerals and video-feed immersion were declined because prose comparison matters more than counts or media. Desktop selection discipline and console panel priorities inform focus and responsive behavior without their decorative skin.
+## Identity and typography
 
-Key characteristics: compact navigation; a continuous list/detail workspace; source text before confirmation; plain-language operational states. No remote fonts or imagery.
+`Bot.tsx` owns the crisp, geometric pixel robot; `Brand.tsx` composes it with the JevMate wordmark. The same bot appears on the connection page, in instance status, in model assessment headers and in empty states. The favicon uses the same geometry.
 
-## Colors
-
-The light-only palette uses cool neutral surfaces and a restrained green action accent. Canvas surrounds white panels; ink carries primary text, muted carries metadata, and seam separates regions.
-
-Green identifies confirmation, active navigation, selected rows, and successful application. Amber identifies pending attention or missing information, never model correctness. Retry and stale states use the warm retry pair; skipped records use the neutral pair. Errors use the error pair. Blue is reserved for links and visible keyboard focus. Status meaning always appears in text as well as color.
-
-## Typography
-
-All text uses the system sans-serif stack in the frontmatter. The base is 15px/1.6. Workspace headings use 26px/650; issue titles use 24px/1.45 with bold weight. Section headings use 15px/650. Source prose is 14px/1.85 even though its semantic container is a `pre`; it is not rendered in monospace.
-
-List titles use 15px/1.55. Labels are generally 12px; supporting metadata is 11–13px. Counts, issue numbers, page numbers, and confidence values use tabular figures where explicitly styled. The login headline is 36px/1.4. At the mobile breakpoint, workspace headings become 23px, issue titles 22px, and the login headline 32px. Long titles, repository names, and source text wrap rather than widen the layout.
+Geist Variable is the reading and heading face. Geist Mono Variable is reserved for identifiers, metadata, model names and console labels. Both fonts are bundled from Fontsource and served locally; the Worker CSP permits only same-origin fonts. Chinese falls back to the platform's CJK font. Phosphor provides consistent operational icons, all decorative icons hidden from assistive technology.
 
 ## Layout
 
-Desktop uses a 212px sticky, full-height sidebar beside a fluid workspace capped at 1600px. Workspace padding is 30px 34px 16px. The bordered inbox has a minimum height of 580px and columns `minmax(250px, 33%) minmax(0, 1fr)`. Search sits above the index, pagination below it; the review pane has 24px 30px 28px padding. Source text scrolls inside a 360px maximum-height region.
+Desktop has a 225px navigation rail, a compact context bar, a header and an edge-to-edge list/detail workspace. At 1150px the rail narrows to 195px. Above 1650px the issue index is 380px. The header exposes language, refresh and import controls; the import form is initially collapsed and closes after a successful enqueue.
 
-At 1100px and below, the sidebar becomes 180px, workspace padding becomes 24px 22px, review padding becomes 22px, and import controls wrap. At 780px and below, the sidebar becomes a compact header with horizontally scrolling scope buttons and a top-right logout button. Workspace padding is 22px 16px; the inbox becomes a single pane with a 400px minimum height. Selecting an issue switches from list to detail, with a visible return button. Returning or successfully applying/skipping clears explicit selection, returns to the list, and focuses search. This preserves context after an action instead of exposing another issue's actions at the old scroll position.
+At 800px and below, navigation becomes a horizontally scrollable row. List and detail are separate views. Completing a review returns to the list and focuses search, preserving the previous regression fix. Source prose stays readable, wraps long content and scrolls within its bounded area. Inputs use 16px text on mobile.
 
-The login page is capped at 1020px with a 440px form column. Spacing follows observed component needs rather than a fabricated uniform scale: 10–12px control gaps, 16–18px list padding, and 20–24px review section spacing.
+## Connection page
 
-## Elevation & Depth
+A two-column layout pairs the pixel bot and “The bot sorts. You decide.” with a terminal-framed authentication panel. The event → decision → approval sequence describes the real product workflow. It contains no sample performance claims, fabricated telemetry or fake terminal output. Mobile stacks story and connection form.
 
-Panels are flat: white surfaces, one-pixel seams, and selected-state tints establish hierarchy. There are no floating drop shadows. Selected issue rows use the inset outline `inset 0 0 0 1px #b8d6c0`. Keyboard focus uses a 3px blue outline with 3px offset.
+## Assessment and action
 
-Button backgrounds transition over 150ms ease-out. Review content enters over 180ms ease-out from 0.75 opacity and a 3px downward offset. Reduced-motion preferences disable animations and transitions.
+Repository and issue identifiers precede the report title. A bot assessment header contains the actual model name. `Signal.tsx` shows twelve decorative confidence cells and an accessible text percentage; confidence remains explicitly described as uncertainty, never accuracy. Original text precedes the label decision area. Label controls are real checkboxes styled as compact selectable tags. Applying labels still requires an explicit human action.
 
-## Shapes
+## States and accessibility
 
-Controls and banners have 6px corners, status badges 4px, and the inbox 9px. List rows are square and full width, divided by seams. The small brand mark uses an 8px rounded square with a white line symbol. Controls normally have a 42px minimum height; the mobile logout control uses 34px. Checkbox squares are 18px within label rows at least 32px high. These are the implemented dimensions, replacing the seed document's intended 44px control baseline.
+Green signals an available primary action, connected instance or applied status; amber identifies review/attention. Every status also has a text label. Clear focus outlines, labeled inputs, native controls, reduced-motion support and live feedback regions remain. Icons do not change accessible control names. Search and filters still apply to the current loaded page. GitHub identifiers and issue contents remain untranslated.
 
-## Components
+## Motion and surfaces
 
-- **Buttons and inputs:** Secondary controls are white with seam borders; hover uses the neutral tint. Primary buttons are green with white text and a darker hover. Disabled buttons use 0.55 opacity and a not-allowed cursor. Inputs share control corners and show visible labels; search has a screen-reader label. Empty label selection disables confirmation.
-- **Navigation and index:** Scope buttons and selected issue rows expose `aria-pressed`. Active navigation uses the active green pair; selected rows use the pale selected-row tint and inset outline. Search and scope filtering apply to the loaded page, which is identified above the list.
-- **Review desk:** Text status and GitHub link precede repository reference and title. Two judgment columns show category/module and explicitly labeled model confidence. Missing-information guidance precedes escaped, plain-text source evidence. The separate confirmation area uses native checkboxes and wrapping action buttons. Confidence is not presented as accuracy.
-- **Operational states:** Pending records allow label editing and skipping. Applying records show “待重试,” lock the original selection, and offer retry. Applied and dismissed records show history; stale records explain reimport. Busy actions are disabled and use contextual progress text. Failed or unfinished jobs appear in an expandable list with retry controls.
-- **Feedback and empty states:** Errors use `role="alert"`; successful operations use `role="status"`. Empty search, empty scope, first-use inbox, and processed-page states have distinct copy. Missing repository configuration disables import and provides setup guidance. Authentication uses a password field, connection progress/error states, and a full-width primary button; the token stays in page memory.
+Surfaces are opaque and divided by one-pixel seams. Corners are tight, not rounded cards. Only the pixel bot's staging area has a dot matrix. The review pane enters with a small opacity/translation change; refresh rotates only during an operation. Reduced-motion preferences remove both effects. No global CRT filters obscure text.
 
-## Do's and Don'ts
+## Implementation references
 
-- **Do** keep evidence and the explicit confirmation area distinct, retaining additive-label behavior in the copy.
-- **Do** use text alongside state color, visible keyboard focus, wrapping prose, and reduced-motion support.
-- **Do** retain the mobile return-to-list behavior after completed decisions.
-- **Don't** imply that model confidence guarantees correctness or use amber as a correctness score.
-- **Don't** replace plain issue text with trusted HTML, introduce ornamental charts or imagery, or add depth effects unsupported by the flat review-desk direction.
-
-## Language controls
-
-The sign-in and workspace headers include a native language select. English is the default; Simplified Chinese is available, and explicit preferences persist locally. Headers and the import toolbar wrap for translated text. On screens at or below 780px, inputs and selects use 16px text. Changing languages keeps the current review, selections, and session; metadata, accessible labels, status messages and known errors update in place.
+- `web/style.css`: current visual tokens and responsive layout.
+- `web/Bot.tsx`, `web/Brand.tsx`, `web/Icon.tsx`: identity and icon system.
+- `web/Signal.tsx`: confidence display.
+- `web/App.tsx`, `web/Review.tsx`: operational composition.
+- `web/locales/`: English-default and Simplified Chinese interface copy.

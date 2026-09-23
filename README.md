@@ -6,6 +6,13 @@ A self-hosted GitHub issue triage assistant powered by **Jev**, built with React
 
 Jev suggests a category, module, and missing report details. You review the original issue, adjust the labels, and explicitly confirm before JevMate adds them to GitHub.
 
+## Interface
+
+A dark Bot operator console with a pixel robot identity, compact issue review, and on-demand import controls. Screenshots below use explicitly synthetic local fixtures.
+
+![JevMate connection console](docs/screenshots/connect.png)
+![JevMate issue review console](docs/screenshots/workspace.png)
+
 ## What ships in v0.1
 
 - Signed GitHub webhooks for opened, edited, and reopened issues.
