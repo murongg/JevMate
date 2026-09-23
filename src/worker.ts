@@ -1,4 +1,7 @@
 import { z } from 'zod';
+import { oauth } from './oauth';
+import { accountsApi } from './accounts';
+import { accountWebhook, processAccountJob, fanout } from './account-jobs';
 import { authorized, verifyWebhook } from './auth';
 import { GitHub } from './github';
 import { enqueue, processJob } from './jobs';
@@ -64,13 +67,15 @@ async function webhook(req: Request, env: Env) {
     throw new HttpError(401, 'Invalid webhook signature.');
   const kind = req.headers.get('X-GitHub-Event');
   if (kind === 'ping') return Response.json({ ok: true });
-  if (kind !== 'issues') return Response.json({ ignored: true });
+  if (env.AUTH_MODE !== 'github' && kind !== 'issues') return Response.json({ ignored: true });
   let payload: unknown;
   try {
     payload = JSON.parse(raw);
   } catch {
     throw new HttpError(400, 'Invalid webhook JSON.');
   }
+  if (env.AUTH_MODE === 'github')
+    return accountWebhook(kind, payload, req.headers.get('X-GitHub-Delivery'), env);
   const input = event.parse(payload);
   if (String(input.installation.id) !== env.GITHUB_INSTALLATION_ID)
     throw new HttpError(403, 'Installation is not allowed.');
@@ -87,6 +92,7 @@ async function webhook(req: Request, env: Env) {
   return Response.json({ queued: true }, { status: 202 });
 }
 async function api(req: Request, env: Env, url: URL): Promise<Response> {
+  if (env.AUTH_MODE === 'github') return accountsApi(req, env, () => jsonBody(req));
   if (!(await authorized(req, env.ADMIN_TOKEN)))
     throw new HttpError(401, 'Enter the deployment admin token.');
   const repos = allowedRepos(env);
@@ -189,6 +195,7 @@ export default {
   async fetch(req: Request, env: Env): Promise<Response> {
     try {
       const url = new URL(req.url);
+      if (url.pathname.startsWith('/auth/')) return secure(await oauth(req, env));
       if (url.pathname === '/health' && req.method === 'GET')
         return secure(Response.json({ ok: true, service: 'JevMate' }));
       if (url.pathname === '/webhooks/github' && req.method === 'POST')
@@ -203,10 +210,15 @@ export default {
       return secure(Response.json({ error: message }, { status }));
     }
   },
-  async queue(batch: MessageBatch<{ id: string }>, env: Env): Promise<void> {
+  async queue(
+    batch: MessageBatch<{ id: string; kind?: 'account' | 'event' }>,
+    env: Env,
+  ): Promise<void> {
     for (const message of batch.messages) {
       try {
-        await processJob(env, message.body.id);
+        if (message.body.kind === 'event') await fanout(env, message.body.id);
+        else if (message.body.kind === 'account') await processAccountJob(env, message.body.id);
+        else await processJob(env, message.body.id);
         message.ack();
       } catch {
         message.retry({ delaySeconds: Math.min(300, 30 * 2 ** Math.min(message.attempts, 3)) });

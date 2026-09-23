@@ -3,6 +3,13 @@ import { beforeEach, afterEach, expect, it, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import App from '../web/App';
 const token = 'synthetic-admin-token-that-is-long-enough';
+function legacyFetch(handler: (input: string, init?: RequestInit) => Promise<Response>) {
+  return vi.fn(async (input: string, init?: RequestInit) =>
+    input === '/auth/status'
+      ? Response.json({ mode: 'legacy', available: false })
+      : handler(input, init),
+  );
+}
 const item = {
   id: 'a'.repeat(64),
   repo: 'example/repo',
@@ -25,7 +32,7 @@ const item = {
 function mockApi() {
   return vi.stubGlobal(
     'fetch',
-    vi.fn(async (input: string, init?: RequestInit) => {
+    legacyFetch(async (input: string, init?: RequestInit) => {
       if (input === '/api/config')
         return Response.json({
           repos: ['example/repo'],
@@ -41,6 +48,10 @@ function mockApi() {
 }
 beforeEach(() => {
   localStorage.clear();
+  vi.stubGlobal(
+    'fetch',
+    legacyFetch(async () => Response.json({ error: 'unauthorized' }, { status: 401 })),
+  );
 });
 afterEach(() => {
   cleanup();
@@ -51,7 +62,7 @@ it('requires authentication, loads review data, and sends only selected labels',
   mockApi();
   render(<App />);
   expect(screen.queryByText('Synthetic issue')).toBeNull();
-  fireEvent.change(screen.getByLabelText('Admin token'), { target: { value: token } });
+  fireEvent.change(await screen.findByLabelText('Admin token'), { target: { value: token } });
   fireEvent.click(screen.getByRole('button', { name: 'Open workspace' }));
   await screen.findByRole('heading', { name: 'Synthetic issue' });
   expect(screen.getByText('<script>alert(1)</script>')).toBeTruthy();
@@ -68,12 +79,12 @@ it('requires authentication, loads review data, and sends only selected labels',
 it('keeps authentication errors visible and allows retry', async () => {
   vi.stubGlobal(
     'fetch',
-    vi.fn(async () =>
+    legacyFetch(async () =>
       Response.json({ error: 'Enter the deployment admin token.' }, { status: 401 }),
     ),
   );
   render(<App />);
-  fireEvent.change(screen.getByLabelText('Admin token'), { target: { value: token } });
+  fireEvent.change(await screen.findByLabelText('Admin token'), { target: { value: token } });
   fireEvent.click(screen.getByRole('button', { name: 'Open workspace' }));
   expect(await screen.findByRole('alert')).toHaveProperty(
     'textContent',
@@ -86,12 +97,12 @@ it('keeps authentication errors visible and allows retry', async () => {
 it('has a working logout action that removes private issue content', async () => {
   mockApi();
   render(<App />);
-  fireEvent.change(screen.getByLabelText('Admin token'), { target: { value: token } });
+  fireEvent.change(await screen.findByLabelText('Admin token'), { target: { value: token } });
   fireEvent.click(screen.getByRole('button', { name: 'Open workspace' }));
   await screen.findByRole('heading', { name: 'Synthetic issue' });
   fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
   expect(screen.queryByText('Synthetic issue')).toBeNull();
-  expect(screen.getByLabelText('Admin token')).toHaveProperty('value', '');
+  expect(await screen.findByLabelText('Admin token')).toHaveProperty('value', '');
 });
 it.each(['Confirm and add labels', 'Skip suggestion'])(
   'returns to the list after %s instead of silently swapping mobile review context',
@@ -100,7 +111,7 @@ it.each(['Confirm and add labels', 'Skip suggestion'])(
     const second = { ...item, id: 'b'.repeat(64), number: 2, title: 'Second synthetic issue' };
     vi.stubGlobal(
       'fetch',
-      vi.fn(async (input: string) => {
+      legacyFetch(async (input: string) => {
         if (input === '/api/config')
           return Response.json({
             repos: ['example/repo'],
@@ -118,7 +129,7 @@ it.each(['Confirm and add labels', 'Skip suggestion'])(
       }),
     );
     render(<App />);
-    fireEvent.change(screen.getByLabelText('Admin token'), { target: { value: token } });
+    fireEvent.change(await screen.findByLabelText('Admin token'), { target: { value: token } });
     fireEvent.click(screen.getByRole('button', { name: 'Open workspace' }));
     await screen.findByRole('heading', { name: 'Synthetic issue' });
     fireEvent.click(screen.getByRole('button', { name: /#1.*Synthetic issue/ }));
@@ -132,29 +143,29 @@ it.each(['Confirm and add labels', 'Skip suggestion'])(
   },
 );
 
-it('defaults to English even with a Chinese browser locale', () => {
+it('defaults to English even with a Chinese browser locale', async () => {
   vi.spyOn(navigator, 'language', 'get').mockReturnValue('zh-CN');
   render(<App />);
-  expect(screen.getByRole('button', { name: 'Open workspace' })).toBeTruthy();
+  expect(await screen.findByRole('button', { name: 'Open workspace' })).toBeTruthy();
   expect(document.documentElement.lang).toBe('en');
   expect(document.title).toBe('JevMate · Issue workspace');
 });
-it('persists an explicit language choice and restores it after remount', () => {
+it('persists an explicit language choice and restores it after remount', async () => {
   const { unmount } = render(<App />);
   fireEvent.change(screen.getByLabelText('Language'), { target: { value: 'zh-CN' } });
-  expect(screen.getByRole('button', { name: '进入工作台' })).toBeTruthy();
+  expect(await screen.findByRole('button', { name: '进入工作台' })).toBeTruthy();
   expect(document.documentElement.lang).toBe('zh-CN');
   expect(localStorage.getItem('jevmate.locale.v1')).toBe('zh-CN');
   unmount();
   render(<App />);
-  expect(screen.getByLabelText('管理令牌')).toBeTruthy();
+  expect(await screen.findByLabelText('管理令牌')).toBeTruthy();
   fireEvent.change(screen.getByLabelText('语言'), { target: { value: 'en' } });
-  expect(screen.getByLabelText('Admin token')).toBeTruthy();
+  expect(await screen.findByLabelText('Admin token')).toBeTruthy();
 });
-it('falls back to English for unknown preferences and works when storage is unavailable', () => {
+it('falls back to English for unknown preferences and works when storage is unavailable', async () => {
   localStorage.setItem('jevmate.locale.v1', 'unsupported');
   const first = render(<App />);
-  expect(screen.getByLabelText('Admin token')).toBeTruthy();
+  expect(await screen.findByLabelText('Admin token')).toBeTruthy();
   first.unmount();
   vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
     throw new Error('Storage unavailable');
@@ -164,12 +175,12 @@ it('falls back to English for unknown preferences and works when storage is unav
   });
   render(<App />);
   fireEvent.change(screen.getByLabelText('Language'), { target: { value: 'zh-CN' } });
-  expect(screen.getByLabelText('管理令牌')).toBeTruthy();
+  expect(await screen.findByLabelText('管理令牌')).toBeTruthy();
 });
 it('switches workspace copy without resetting label selections or translating issue content', async () => {
   mockApi();
   render(<App />);
-  fireEvent.change(screen.getByLabelText('Admin token'), { target: { value: token } });
+  fireEvent.change(await screen.findByLabelText('Admin token'), { target: { value: token } });
   fireEvent.click(screen.getByRole('button', { name: 'Open workspace' }));
   await screen.findByRole('heading', { name: 'Synthetic issue' });
   fireEvent.click(screen.getByRole('checkbox', { name: 'needs-info' }));
@@ -188,12 +199,12 @@ it('switches workspace copy without resetting label selections or translating is
 it('relocalizes an existing API error when the language changes', async () => {
   vi.stubGlobal(
     'fetch',
-    vi.fn(async () =>
+    legacyFetch(async () =>
       Response.json({ error: 'Enter the deployment admin token.' }, { status: 401 }),
     ),
   );
   render(<App />);
-  fireEvent.change(screen.getByLabelText('Admin token'), { target: { value: token } });
+  fireEvent.change(await screen.findByLabelText('Admin token'), { target: { value: token } });
   fireEvent.click(screen.getByRole('button', { name: 'Open workspace' }));
   await screen.findByRole('alert');
   fireEvent.change(screen.getByLabelText('Language'), { target: { value: 'zh-CN' } });
@@ -202,7 +213,7 @@ it('relocalizes an existing API error when the language changes', async () => {
 it('keeps import controls out of the inbox until requested and closes them after queuing', async () => {
   vi.stubGlobal(
     'fetch',
-    vi.fn(async (input: string) => {
+    legacyFetch(async (input: string) => {
       if (input === '/api/config')
         return Response.json({
           repos: ['example/repo'],
@@ -216,7 +227,7 @@ it('keeps import controls out of the inbox until requested and closes them after
     }),
   );
   render(<App />);
-  fireEvent.change(screen.getByLabelText('Admin token'), { target: { value: token } });
+  fireEvent.change(await screen.findByLabelText('Admin token'), { target: { value: token } });
   fireEvent.click(screen.getByRole('button', { name: 'Open workspace' }));
   await screen.findByRole('heading', { name: 'Synthetic issue' });
   expect(screen.queryByLabelText('GitHub page')).toBeNull();
@@ -243,7 +254,7 @@ it('keeps source text and Bot decisions tied to the same selected issue in the s
   };
   vi.stubGlobal(
     'fetch',
-    vi.fn(async (input: string) => {
+    legacyFetch(async (input: string) => {
       if (input === '/api/config')
         return Response.json({
           repos: ['example/repo'],
@@ -257,7 +268,7 @@ it('keeps source text and Bot decisions tied to the same selected issue in the s
     }),
   );
   render(<App />);
-  fireEvent.change(screen.getByLabelText('Admin token'), { target: { value: token } });
+  fireEvent.change(await screen.findByLabelText('Admin token'), { target: { value: token } });
   fireEvent.click(screen.getByRole('button', { name: 'Open workspace' }));
   await screen.findByRole('heading', { name: 'Synthetic issue' });
   expect(screen.getByRole('region', { name: 'Original issue' }).textContent).toContain(item.body);

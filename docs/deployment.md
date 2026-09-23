@@ -1,6 +1,6 @@
 # Deploy JevMate to Cloudflare
 
-You need a Cloudflare account, permission to create/install a GitHub App, and a TypeSafe API key with Jev access. Configure one GitHub installation per deployment. Multiple allowlisted repositories from that installation are supported.
+You need a Cloudflare account, permission to create/install a GitHub App, and a TypeSafe API key with Jev access. Choose public GitHub login with per-user keys, or legacy admin mode with one installation and a repository allowlist. The steps below bootstrap legacy mode; then follow [public GitHub login](#public-github-login) to enable accounts.
 
 ## 1. Install dependencies and authenticate
 
@@ -46,7 +46,7 @@ In GitHub's developer settings, create a GitHub App:
 - Subscribe to **Issues** events.
 - Install the App on only the repositories you intend to manage.
 
-No user OAuth callback is required: the MVP uses GitHub App installation credentials plus a separate admin token for its private inbox. It does not sign users into GitHub or create user access tokens.
+Legacy mode does not require OAuth. For public GitHub login, configure the callback and client credentials described below.
 
 Copy the App ID. Open the installation settings page and copy the installation ID from its URL. Generate and download the App private key.
 
@@ -84,6 +84,54 @@ Review `policy.json`. Every label you want to apply must already exist in the ta
 npm run check
 npm run deploy
 ```
+
+## Public GitHub login
+
+Apply all D1 migrations before enabling this mode. `0002.sql` adds separate account tables; it does not delete legacy jobs or history.
+
+1. In the GitHub App **General** settings, set **Redirect URI** to `<worker-url>/auth/callback` with wildcard matching off. Set **Setup URL** to `<worker-url>/` so installation returns to the workspace.
+2. In **Advanced**, make the App public so any account can install it. Keep Issues read/write and Metadata read; no additional repository permissions are needed. Login happens before installation, so OAuth during installation is optional and not required.
+3. Copy the App **Client ID** (different from App ID), generate a **Client Secret**, and save them as Worker secrets. Generate a separate 32-byte hex encryption key locally and save it as `CREDENTIAL_KEY`.
+
+```sh
+npx wrangler secret put GITHUB_CLIENT_ID
+npx wrangler secret put GITHUB_CLIENT_SECRET
+openssl rand -hex 32
+npx wrangler secret put CREDENTIAL_KEY
+```
+
+Set these non-secret variables in your Wrangler configuration:
+
+```json
+{
+  "AUTH_MODE": "github",
+  "APP_URL": "https://jevmate.<your-subdomain>.workers.dev",
+  "GITHUB_APP_ID": "your-numeric-app-id",
+  "GITHUB_APP_SLUG": "your-app-slug",
+  "DAILY_ANALYSIS_LIMIT": "200",
+  "JEV_MODEL": "jev-latest"
+}
+```
+
+`WEBHOOK_SECRET` must still match the App. In GitHub mode, `ADMIN_TOKEN`, `ALLOWED_REPOS`, `GITHUB_INSTALLATION_ID` and the platform `TYPESAFE_API_KEY` do not grant user access or fund new analyses. Existing legacy queue messages may finish using the old credentials. Retain them until that queue is drained. New jobs and label writes use the owning user’s GitHub token.
+
+```sh
+npm run check
+npm run db:remote
+npm run deploy
+```
+
+Sign in with GitHub, open **Account & repositories**, save your Jev key, install the App on selected repositories, refresh the repository list and connect a repository. Import an issue to verify analysis; applying labels remains an explicit action. Refreshing the page restores the session. Signing out clears that browser session. Removing the Jev key also pauses all that user’s connections; reconnect them after saving a new key.
+
+Credentials are encrypted using AES-GCM with per-user context. Back up `CREDENTIAL_KEY` securely and keep it stable: replacing it without a data migration makes existing encrypted credentials unreadable. Secrets never belong in source control or frontend environment variables. Sessions use Secure/HttpOnly/SameSite cookies, CSRF tokens and seven-day expiration. OAuth uses PKCE and one-use browser-bound state. Revoking GitHub authorization invalidates sessions and pauses connections.
+
+Every read/import/apply and background analysis checks current repository access with GitHub. Sharing an App installation does not share account history. Two users connecting the same repository each incur their own Jev calls. GitHub itself enforces the user’s ability to write labels. The policy remains deployment-wide.
+
+Limits: 100 connected repositories per user, 60 API requests per user/minute, 10 OAuth starts per IP/minute, and 200 model evaluations per user/UTC day by default (`DAILY_ANALYSIS_LIMIT`, 1–10000). Cached decisions do not consume the daily quota. Repository discovery is bounded to 10 installation pages and 30 repository-list requests; unusually large installations receive an explicit error instead of silently exposing partial access. Cloudflare usage is still billed to the operator.
+
+Legacy history stays in its original tables and is never assigned to the first GitHub user. Personal workspaces start empty; reconnect and import issues as needed. To roll back the login mode, set `AUTH_MODE` to `legacy` and redeploy; retain all account tables and the encryption secret. This preserves both histories without exposing personal data through the admin API.
+
+Use HTTPS for production. For local OAuth, register an exact local callback and use the matching `APP_URL`; HTTPS local development is preferable for Secure cookies. Do not send production OAuth codes to a development origin.
 
 ## Smoke checks
 

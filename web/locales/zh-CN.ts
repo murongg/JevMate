@@ -1,5 +1,29 @@
 import type { MessageKey } from './en';
 export const zhCN: Record<MessageKey, string> = {
+  githubLogin: '使用 GitHub 登录',
+  githubLoginHint: '登录后填写自己的 Jev Key，再连接你有权限访问的仓库。',
+  githubUnavailable: 'GitHub 登录尚未配置，请联系此实例的管理员。',
+  loadingSession: '正在检查登录状态…',
+  account: '账号与仓库',
+  accountTitle: '你的工作空间',
+  yourKey: '你的 Jev API Key',
+  keyHint: '密钥加密保存。已连接仓库的 Issue 内容会使用你的 Key 发送给 TypeSafe。',
+  keySaved: '密钥已配置，留空可保留现有密钥。',
+  saveKey: '保存密钥',
+  removeKey: '移除密钥并暂停',
+  keyPlaceholder: '粘贴你的 TypeSafe API Key',
+  reposTitle: '已连接仓库',
+  installApp: '安装 GitHub App',
+  refreshRepos: '刷新仓库',
+  connectRepo: '连接',
+  disconnectRepo: '断开',
+  noAvailableRepos: '未发现可访问的仓库。请先将 App 安装到选定仓库，再刷新。',
+  connectHint: '打开“账号与仓库”，填写自己的 Jev Key 并连接仓库。',
+  accountReady: '已保存，工作空间已就绪。',
+  accountBusy: '正在保存…',
+  dailyLimit: '每用户每日分析上限：{count} 次（UTC）。',
+  closeAccount: '关闭账号设置',
+  githubSessionExpired: '请使用 GitHub 登录后继续。',
   importToggle: '导入 Issue',
   console: 'Bot 控制台',
   loginAccess: '连接你的实例',
@@ -112,6 +136,26 @@ export const zhCN: Record<MessageKey, string> = {
   'name.expected': '预期行为',
 };
 export const errors: Record<string, string> = {
+  'Sign in with GitHub to continue.': '请使用 GitHub 登录后继续。',
+  'Invalid session request. Refresh the page and retry.': '会话请求无效，请刷新页面后重试。',
+  'GitHub authorization expired. Sign in again.': 'GitHub 授权已失效，请重新登录。',
+  'GitHub authorization changed. Refresh and retry.': 'GitHub 授权已更新，请刷新后重试。',
+  'GitHub authorization is unavailable. Try again.': 'GitHub 授权服务暂不可用，请重试。',
+  'GitHub authorization is refreshing. Please retry shortly.': '正在刷新 GitHub 授权，请稍后重试。',
+  'Jev key could not be verified. Check the key and try again.': '无法验证 Jev Key，请检查后重试。',
+  'Add your own Jev API key in Account settings first.': '请先在账号设置中填写自己的 Jev API Key。',
+  'This repository is not accessible to your GitHub account and this App.':
+    '你的 GitHub 账号和此 App 未同时获得该仓库的访问权限。',
+  'A personal workspace supports up to 100 connected repositories.':
+    '个人工作区最多连接 100 个仓库。',
+  'Connect an authorized repository before importing issues.': '请先连接已授权仓库，再导入 Issue。',
+  'Repository access is no longer available.': '当前已无权访问此仓库。',
+  'Usage limit reached. Please try again later.': '已达到调用上限，请稍后重试。',
+  'Too many installations to list safely. Contact the operator.':
+    '安装数量超出支持范围，请联系部署者。',
+  'Too many repositories to list safely. Contact the operator.':
+    '仓库数量超出支持范围，请联系部署者。',
+
   'Enter the deployment admin token.': '请输入此部署的管理令牌。',
   'Repository is not allowed by this deployment.': '此部署未授权操作该仓库。',
   'Operation failed. Check deployment configuration and retry.': '操作失败，请检查部署配置后重试。',

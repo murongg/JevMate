@@ -16,3 +16,17 @@ export interface Snapshot {
   page: number;
 }
 export type Call = <T>(path: string, body?: unknown) => Promise<T>;
+
+export interface UserSession {
+  user: { id: string; login: string };
+  csrf: string;
+  keyConfigured: boolean;
+  installUrl: string | null;
+  dailyLimit: number;
+}
+export interface ConnectedRepository {
+  id: string;
+  installationId: string;
+  name: string;
+  connected: boolean;
+}

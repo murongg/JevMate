@@ -1,9 +1,10 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { client, snapshot } from './api';
 import Review from './Review';
 import { I18nProvider, useI18n, type Message } from './I18n';
 import Language from './Language';
-import type { Call, Snapshot } from './types';
+import type { Call, Snapshot, UserSession } from './types';
+import Account from './Account';
 import Brand from './Brand';
 import Bot from './Bot';
 import Icon from './Icon';
@@ -30,6 +31,72 @@ function Workspace() {
     [scanPage, setScanPage] = useState(1),
     [mobileDetail, setMobileDetail] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [boot, setBoot] = useState<{
+    mode: 'loading' | 'legacy' | 'github' | 'error';
+    available: boolean;
+  }>({ mode: 'loading', available: false });
+  const [session, setSession] = useState<UserSession | null>(null);
+  const [accountOpen, setAccountOpen] = useState(false);
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const status = await fetch('/auth/status', { credentials: 'same-origin' });
+        if (!status.ok) throw new Error('Connection failed. Try again.');
+        const settings = (await status.json()) as { mode: 'legacy' | 'github'; available: boolean };
+        if (settings.mode === 'github' && settings.available) {
+          const response = await fetch('/api/session', { credentials: 'same-origin' });
+          if (response.ok) {
+            const identity = (await response.json()) as UserSession;
+            const call = client('', identity.csrf),
+              next = await snapshot(call, 1);
+            if (active) {
+              setSession(identity);
+              setApi(() => call);
+              setData(next);
+              setRepo(next.config.repos[0] || '');
+              setAccountOpen(!identity.keyConfigured || !next.config.repos.length);
+            }
+          } else if (response.status !== 401) throw new Error('Connection failed. Try again.');
+        }
+        if (active) setBoot(settings);
+      } catch (e) {
+        if (active) {
+          setError(e instanceof Error ? e.message : 'Connection failed. Try again.');
+          setBoot({ mode: 'github', available: true });
+        }
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+  async function refreshAccount() {
+    if (!api) return;
+    setSession(await api<UserSession>('/api/session'));
+    const next = await snapshot(api, 1);
+    setData(next);
+    setRepo(next.config.repos[0] || '');
+  }
+  async function logout() {
+    setBusy(true);
+    setError('');
+    try {
+      if (session && api) await api('/auth/logout', {});
+      setApi(null);
+      setData(null);
+      setSession(null);
+      setNotice(null);
+      setSelected(null);
+      setMobileDetail(false);
+      setAccountOpen(false);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Operation failed. Try again.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   function returnToList() {
     // Completing a review must not replace its action buttons with another issue below the fold.
     setMobileDetail(false);
@@ -123,33 +190,54 @@ function Workspace() {
                 <Icon name="repo" />
               </div>
               <h2>{t('loginAccess')}</h2>
-              <p>{t('loginAccessHint')}</p>
-              <form onSubmit={login}>
-                <label htmlFor="token">{t('adminToken')}</label>
-                <div className="token-input">
-                  <span aria-hidden="true">&gt;</span>
-                  <input
-                    id="token"
-                    type="password"
-                    value={token}
-                    onChange={(e) => setToken(e.target.value)}
-                    required
-                    minLength={32}
-                    autoComplete="off"
-                    placeholder={t('tokenPlaceholder')}
-                  />
+              <p>{t(boot.mode === 'legacy' ? 'loginAccessHint' : 'githubLoginHint')}</p>
+              {boot.mode === 'loading' ? (
+                <p role="status">{t('loadingSession')}</p>
+              ) : boot.mode === 'github' ? (
+                <div className="github-login">
+                  {error && (
+                    <div role="alert" className="error">
+                      {localizeError(error)}
+                    </div>
+                  )}
+                  {boot.available ? (
+                    <a className="primary" href="/auth/github">
+                      <Icon name="repo" />
+                      {t('githubLogin')}
+                      <Icon name="arrow" />
+                    </a>
+                  ) : (
+                    <p>{t('githubUnavailable')}</p>
+                  )}
                 </div>
-                <small>{t('tokenHint')}</small>
-                {error && (
-                  <div role="alert" className="error">
-                    {localizeError(error)}
+              ) : (
+                <form onSubmit={login}>
+                  <label htmlFor="token">{t('adminToken')}</label>
+                  <div className="token-input">
+                    <span aria-hidden="true">&gt;</span>
+                    <input
+                      id="token"
+                      type="password"
+                      value={token}
+                      onChange={(e) => setToken(e.target.value)}
+                      required
+                      minLength={32}
+                      autoComplete="off"
+                      placeholder={t('tokenPlaceholder')}
+                    />
                   </div>
-                )}
-                <button className="primary" disabled={busy}>
-                  {busy ? t('connecting') : t('openWorkspace')}
-                  <Icon name="arrow" />
-                </button>
-              </form>
+                  <small>{t('tokenHint')}</small>
+                  {error && (
+                    <div role="alert" className="error">
+                      {localizeError(error)}
+                    </div>
+                  )}
+                  <button className="primary" disabled={busy}>
+                    {busy ? t('connecting') : t('openWorkspace')}
+                    <Icon name="arrow" />
+                  </button>
+                </form>
+              )}
             </div>
             <div className="login-panel-foot">
               <Icon name="check" />
@@ -177,7 +265,7 @@ function Workspace() {
         <div className="workspace-context">
           <span className="context-divider" />
           <Icon name="repo" />
-          <span>{data.config.repos[0]?.split('/')[0] || 'JevMate'}</span>
+          <span>{session?.user.login || data.config.repos[0]?.split('/')[0] || 'JevMate'}</span>
           <span className="context-path">/ {t('workspaceLabel')}</span>
         </div>
         <div className="commandbar-tools">
@@ -186,24 +274,26 @@ function Workspace() {
             {t('manualMode')}
           </span>
           <Language />
-          <button
-            className="signout-button"
-            disabled={busy}
-            onClick={() => {
-              setApi(null);
-              setData(null);
-              setError('');
-              setNotice(null);
-              setSelected(null);
-              setMobileDetail(false);
-            }}
-          >
+          {session && (
+            <button aria-expanded={accountOpen} onClick={() => setAccountOpen((open) => !open)}>
+              {t('account')}
+            </button>
+          )}
+          <button className="signout-button" disabled={busy} onClick={logout}>
             <Icon name="arrow" />
             {t('signOut')}
           </button>
         </div>
       </header>
       <main className="workspace">
+        {session && api && accountOpen && (
+          <Account
+            call={api}
+            session={session}
+            onChanged={refreshAccount}
+            onClose={() => setAccountOpen(false)}
+          />
+        )}
         <header className="workspace-header">
           <div>
             <h1>
@@ -470,7 +560,7 @@ function Workspace() {
               </div>
               <h2>{data.items.length ? t('pageComplete') : t('getStarted')}</h2>
               <p>{data.items.length ? t('historyHint') : t('startHint')}</p>
-              {!data.config.repos.length && <p>{t('configureRepos')}</p>}
+              {!data.config.repos.length && <p>{t(session ? 'connectHint' : 'configureRepos')}</p>}
             </div>
           )}
         </section>
