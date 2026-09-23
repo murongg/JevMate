@@ -14,7 +14,7 @@
   <a href="https://typesafe.ai/"><img src="https://img.shields.io/badge/Powered%20by-Jev-b7ef70" alt="Powered by Jev" /></a>
 </p>
 
-[中文文档](README.zh-CN.md) · [Deployment](docs/deployment.md) · [Contributing](CONTRIBUTING.md)
+[Live app](https://triage.mrong.me/) · [中文文档](README.zh-CN.md) · [Deployment](docs/deployment.md) · [Contributing](CONTRIBUTING.md)
 
 Jev suggests a category, module, and missing report details. You review the original issue, adjust the labels, and explicitly confirm before JevRepoTriage adds them to GitHub.
 
