@@ -1,6 +1,18 @@
-# JevMate
+<p align="center">
+  <img src="docs/brand/github-app-logo.png" alt="JevMate pixel robot logo" width="112" height="112" />
+</p>
 
-A self-hosted GitHub issue triage assistant powered by **Jev**, built with React and Cloudflare Workers.
+<h1 align="center">JevMate</h1>
+
+<p align="center">A self-hosted GitHub issue triage assistant powered by <strong>Jev</strong>, built with React and Cloudflare Workers.</p>
+
+<p align="center">
+  <a href="https://github.com/murongg/JevMate/actions/workflows/ci.yml"><img src="https://github.com/murongg/JevMate/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI status" /></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/murongg/JevMate" alt="License" /></a>
+  <a href="https://github.com/murongg/JevMate/stargazers"><img src="https://img.shields.io/github/stars/murongg/JevMate" alt="GitHub stars" /></a>
+  <a href="https://developers.cloudflare.com/workers/"><img src="https://img.shields.io/badge/Cloudflare-Workers-F38020?logo=cloudflare&amp;logoColor=white" alt="Cloudflare Workers" /></a>
+  <a href="https://typesafe.ai/"><img src="https://img.shields.io/badge/Powered%20by-Jev-b7ef70" alt="Powered by Jev" /></a>
+</p>
 
 [中文文档](README.zh-CN.md) · [Deployment](docs/deployment.md) · [Contributing](CONTRIBUTING.md)
 
