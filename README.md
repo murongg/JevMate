@@ -30,7 +30,7 @@ A dark Bot operator console with a pixel robot identity, compact issue review, a
 - Signed GitHub webhooks for opened, edited, and reopened issues.
 - Cloudflare Queues processing, retries, and visible failed jobs.
 - Jev Choice decisions plus independent completeness checks.
-- React inbox with original text, model confidence, label selection, dismissal, and history.
+- Repository-scoped React dashboard with searchable repository switching, original text, model confidence, label review, and history.
 - Import existing open issues, one GitHub page at a time (25 entries including PRs; PRs are skipped).
 - Public GitHub sign-in, isolated personal workspaces and encrypted per-user Jev keys.
 - Multiple App installations and repositories; optional legacy admin-token mode.
@@ -53,6 +53,8 @@ The frontend and API deploy together as one Worker with Static Assets. D1 stores
 ## GitHub accounts
 
 Enable [GitHub login](docs/deployment.md#public-github-login) to let anyone sign in, save their own Jev key, install the App and connect repositories. Each personal workspace supports up to 100 connected repositories. Access is limited to the intersection of the user’s GitHub access and the App’s installations; label writes use the user’s token.
+
+After sign-in, a searchable repository directory lists GitHub-authorized repositories with connected ones first. Choose a connected repository to enter its Issue dashboard, or connect an available repository and enter in one step. **All repositories** returns to the directory. The Issue inbox appears only after a repository is chosen; its queue, jobs, history and import target belong to that repository.
 
 By default, each user can request 200 model analyses per UTC day. Jev bills the supplied key; the operator pays Cloudflare costs. Connecting the same repository in two workspaces creates independent histories and analysis charges. Labels still modify the shared GitHub issue after explicit approval.
 

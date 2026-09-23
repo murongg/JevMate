@@ -40,7 +40,7 @@ function mockApi() {
           model: 'jev-test',
         });
       if (input.startsWith('/api/issues?')) return Response.json({ items: [item], page: 1 });
-      if (input === '/api/jobs') return Response.json({ items: [] });
+      if (input.startsWith('/api/jobs')) return Response.json({ items: [] });
       if (input.endsWith('/apply')) return Response.json({ ok: true });
       throw Error(input);
     }),
@@ -64,6 +64,7 @@ it('requires authentication, loads review data, and sends only selected labels',
   expect(screen.queryByText('Synthetic issue')).toBeNull();
   fireEvent.change(await screen.findByLabelText('Admin token'), { target: { value: token } });
   fireEvent.click(screen.getByRole('button', { name: 'Open workspace' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Open example/repo dashboard' }));
   await screen.findByRole('heading', { name: 'Synthetic issue' });
   expect(screen.getByText('<script>alert(1)</script>')).toBeTruthy();
   fireEvent.click(screen.getByRole('checkbox', { name: 'needs-info' }));
@@ -99,6 +100,7 @@ it('has a working logout action that removes private issue content', async () =>
   render(<App />);
   fireEvent.change(await screen.findByLabelText('Admin token'), { target: { value: token } });
   fireEvent.click(screen.getByRole('button', { name: 'Open workspace' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Open example/repo dashboard' }));
   await screen.findByRole('heading', { name: 'Synthetic issue' });
   fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
   expect(screen.queryByText('Synthetic issue')).toBeNull();
@@ -120,7 +122,7 @@ it.each(['Confirm and add labels', 'Skip suggestion'])(
           });
         if (input.startsWith('/api/issues?'))
           return Response.json({ items: handled ? [second] : [item, second], page: 1 });
-        if (input === '/api/jobs') return Response.json({ items: [] });
+        if (input.startsWith('/api/jobs')) return Response.json({ items: [] });
         if (input.endsWith('/apply') || input.endsWith('/dismiss')) {
           handled = true;
           return Response.json({ ok: true });
@@ -131,6 +133,7 @@ it.each(['Confirm and add labels', 'Skip suggestion'])(
     render(<App />);
     fireEvent.change(await screen.findByLabelText('Admin token'), { target: { value: token } });
     fireEvent.click(screen.getByRole('button', { name: 'Open workspace' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Open example/repo dashboard' }));
     await screen.findByRole('heading', { name: 'Synthetic issue' });
     fireEvent.click(screen.getByRole('button', { name: /#1.*Synthetic issue/ }));
     expect(screen.getByRole('region', { name: 'Issue review' }).className).toContain('show-detail');
@@ -182,6 +185,7 @@ it('switches workspace copy without resetting label selections or translating is
   render(<App />);
   fireEvent.change(await screen.findByLabelText('Admin token'), { target: { value: token } });
   fireEvent.click(screen.getByRole('button', { name: 'Open workspace' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Open example/repo dashboard' }));
   await screen.findByRole('heading', { name: 'Synthetic issue' });
   fireEvent.click(screen.getByRole('checkbox', { name: 'needs-info' }));
   fireEvent.change(screen.getByLabelText('Language'), { target: { value: 'zh-CN' } });
@@ -221,7 +225,7 @@ it('keeps import controls out of the inbox until requested and closes them after
           model: 'jev-test',
         });
       if (input.startsWith('/api/issues?')) return Response.json({ items: [item], page: 1 });
-      if (input === '/api/jobs') return Response.json({ items: [] });
+      if (input.startsWith('/api/jobs')) return Response.json({ items: [] });
       if (input === '/api/scan') return Response.json({ queued: 1, page: 1 }, { status: 202 });
       throw Error(input);
     }),
@@ -229,6 +233,7 @@ it('keeps import controls out of the inbox until requested and closes them after
   render(<App />);
   fireEvent.change(await screen.findByLabelText('Admin token'), { target: { value: token } });
   fireEvent.click(screen.getByRole('button', { name: 'Open workspace' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Open example/repo dashboard' }));
   await screen.findByRole('heading', { name: 'Synthetic issue' });
   expect(screen.queryByLabelText('GitHub page')).toBeNull();
   const toggle = screen.getByRole('button', { name: 'Import issues' });
@@ -263,13 +268,14 @@ it('keeps source text and Bot decisions tied to the same selected issue in the s
         });
       if (input.startsWith('/api/issues?'))
         return Response.json({ items: [item, second], page: 1 });
-      if (input === '/api/jobs') return Response.json({ items: [] });
+      if (input.startsWith('/api/jobs')) return Response.json({ items: [] });
       throw Error(input);
     }),
   );
   render(<App />);
   fireEvent.change(await screen.findByLabelText('Admin token'), { target: { value: token } });
   fireEvent.click(screen.getByRole('button', { name: 'Open workspace' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Open example/repo dashboard' }));
   await screen.findByRole('heading', { name: 'Synthetic issue' });
   expect(screen.getByRole('region', { name: 'Original issue' }).textContent).toContain(item.body);
   expect(

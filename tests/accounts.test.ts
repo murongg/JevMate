@@ -11,7 +11,8 @@ const key = '11'.repeat(32),
   csrf = 'synthetic-csrf-value';
 const sent: { id: string; kind?: string }[] = [];
 let revoked = false,
-  readOnly = false;
+  readOnly = false,
+  extraRepo = false;
 let writes: string[] = [];
 beforeAll(async () => {
   mf = new Miniflare(
@@ -22,7 +23,7 @@ beforeAll(async () => {
     }),
   );
   const db = await mf.getD1Database('DB');
-  for (const file of ['0001.sql', '0002.sql'])
+  for (const file of ['0001.sql', '0002.sql', '0003.sql'])
     await db.exec(
       (await readFile(new URL('../migrations/' + file, import.meta.url), 'utf8')).replace(
         /\n/g,
@@ -75,6 +76,7 @@ beforeEach(async () => {
   sent.length = 0;
   revoked = false;
   readOnly = false;
+  extraRepo = false;
   writes = [];
   for (const id of ['101', '202']) {
     const creds = await seal(
@@ -138,6 +140,9 @@ beforeEach(async () => {
                   full_name: id === '101' ? 'alpha/repo' : 'beta/repo',
                   permissions: { push: !readOnly },
                 },
+                ...(extraRepo && id === '101'
+                  ? [{ id: 3030, full_name: 'gamma/repo', permissions: { push: true } }]
+                  : []),
               ],
         });
       if (url.includes('/user/installations'))
@@ -222,6 +227,64 @@ it('stops returning retained snapshots immediately when GitHub access is lost', 
   expect(r.status).toBe(200);
   expect(((await r.json()) as { items: unknown[] }).items).toEqual([]);
   expect((await api('/api/scan', '101', { repo: 'alpha/repo' })).status).toBe(403);
+});
+it('scopes each personal dashboard before pagination and rejects another user’s repository', async () => {
+  extraRepo = true;
+  await env.DB.prepare(
+    'INSERT INTO connections(user_id,repo_id,installation_id,repo) VALUES(?,?,?,?)',
+  )
+    .bind('101', '3030', '1011', 'gamma/repo')
+    .run();
+  await env.DB.batch(
+    Array.from({ length: 51 }, (_, i) =>
+      env.DB.prepare(
+        'INSERT INTO account_analyses(id,user_id,repo_id,repo,number,title,body,decision,created_at) VALUES(?,?,?,?,?,?,?,?,?)',
+      ).bind(
+        String(i + 1).padStart(64, 'a'),
+        '101',
+        '1010',
+        'alpha/repo',
+        i + 2,
+        'Synthetic alpha report',
+        '',
+        JSON.stringify({ labels: [] }),
+        '2099-01-01T00:00:00Z',
+      ),
+    ),
+  );
+  await env.DB.prepare(
+    'INSERT INTO account_analyses(id,user_id,repo_id,repo,number,title,body,decision,created_at) VALUES(?,?,?,?,?,?,?,?,?)',
+  )
+    .bind(
+      'f'.repeat(64),
+      '101',
+      '3030',
+      'gamma/repo',
+      1,
+      'Synthetic gamma report',
+      '',
+      '{}',
+      '2020-01-01T00:00:00Z',
+    )
+    .run();
+  await env.DB.batch([
+    env.DB.prepare(
+      'INSERT INTO account_jobs(id,user_id,repo_id,installation_id,repo,number) VALUES(?,?,?,?,?,?)',
+    ).bind('alpha-job', '101', '1010', '1011', 'alpha/repo', 2),
+    env.DB.prepare(
+      'INSERT INTO account_jobs(id,user_id,repo_id,installation_id,repo,number) VALUES(?,?,?,?,?,?)',
+    ).bind('gamma-job', '101', '3030', '1011', 'gamma/repo', 1),
+  ]);
+  const issues = await api('/api/issues?page=1&repo=gamma%2Frepo');
+  expect(issues.status).toBe(200);
+  expect(((await issues.json()) as { items: { repo: string }[] }).items.map((x) => x.repo)).toEqual(
+    ['gamma/repo'],
+  );
+  const jobs = await api('/api/jobs?repo=gamma%2Frepo');
+  expect(((await jobs.json()) as { items: { id: string }[] }).items.map((x) => x.id)).toEqual([
+    'gamma-job',
+  ]);
+  expect((await api('/api/issues?repo=beta%2Frepo')).status).toBe(403);
 });
 it('does not accept a repository identifier outside live GitHub discovery', async () => {
   expect((await api('/api/connections', '101', { repoId: '2020' })).status).toBe(403);

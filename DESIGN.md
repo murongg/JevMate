@@ -36,7 +36,7 @@ Geist Variable is the reading and heading face. Geist Mono Variable is reserved 
 
 ## Layout
 
-Navigation lives in the top command bar. Workspace scope filters sit above the review surface rather than in a left sidebar. The main view has three functional columns: an issue queue, original report, and a Bot assessment/action panel. At typical desktop widths the queue is 270px and Bot panel 300px; the report fills the remaining space. Above 1500px they expand to 300px and 340px. The Bot panel stays sticky while reviewing longer reports.
+Navigation lives in the top command bar. Sign-in opens a searchable repository directory, with connected repositories first and accessible repositories shown in batches. Entering a repository opens its dashboard; the Issue inbox is absent from the directory. A breadcrumb returns to **All repositories**. The API scopes pagination, jobs and imports to the chosen repository. The dashboard has three functional columns: an issue queue, original report, and a Bot assessment/action panel. At typical desktop widths the queue is 270px and Bot panel 300px; the report fills the remaining space. Above 1500px they expand to 300px and 340px. The Bot panel stays sticky while reviewing longer reports.
 
 At 1000px and below, report and Bot panel stack. At 800px and below, the queue and detail become separate views. Completing a review returns to the queue and focuses search. The source section precedes Bot decisions in both DOM and mobile reading order; selected issue identity drives both together. Import controls remain collapsed by default and open on demand.
 

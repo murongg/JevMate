@@ -236,6 +236,185 @@ h3 {
   margin: 0 auto;
   padding: 0 28px;
 }
+.repository-directory {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 40px 0 80px;
+}
+.directory-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 24px;
+  margin-bottom: 28px;
+}
+.directory-eyebrow {
+  color: var(--green);
+  font: 10px var(--mono);
+  letter-spacing: 0.11em;
+}
+.directory-header h1 {
+  margin: 8px 0 4px;
+  font-size: clamp(30px, 4vw, 44px);
+  line-height: 1.1;
+}
+.directory-header p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+.directory-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.directory-header-actions a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+  font-size: 12px;
+}
+.directory-setup {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  padding: 13px 16px;
+  margin-bottom: 25px;
+  border-left: 3px solid #e6c980;
+  background: #242216;
+  color: #ead9a1;
+  font-size: 12px;
+}
+.directory-search {
+  margin-bottom: 18px;
+  max-width: 620px;
+}
+.directory-search label {
+  display: block;
+  margin-bottom: 8px;
+  color: #b7c7a8;
+  font: 11px var(--mono);
+}
+.directory-search > div {
+  display: flex;
+  align-items: center;
+  border: 1px solid #536747;
+  background: #121811;
+}
+.directory-search > div .icon {
+  margin-left: 13px;
+  color: var(--green);
+  flex: none;
+}
+.directory-search input {
+  width: 100%;
+  border: 0;
+  background: transparent;
+}
+.directory-count {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  color: var(--muted);
+  font: 10px var(--mono);
+}
+.directory-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border-top: 1px solid var(--line);
+}
+.directory-list li {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  min-height: 76px;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--line);
+  transition: background 0.16s;
+}
+.directory-list li:hover {
+  background: #1c241a;
+}
+.directory-repo-icon {
+  color: var(--green);
+}
+.directory-repo-name {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.directory-repo-link {
+  min-height: 0;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  font: 600 13px var(--mono);
+  overflow-wrap: anywhere;
+}
+.directory-repo-link:hover {
+  color: var(--green);
+  background: transparent;
+}
+.directory-repo-name span {
+  margin-top: 3px;
+  color: var(--muted);
+  font: 10px var(--mono);
+}
+.directory-repo-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.directory-repo-actions button {
+  white-space: nowrap;
+}
+.directory-repo-actions button:first-child {
+  border-color: #475d38;
+  background: #25341f;
+  color: var(--green);
+}
+.directory-repo-actions .directory-disconnect {
+  background: transparent;
+}
+.directory-empty {
+  padding: 36px 14px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 13px;
+}
+.directory-more {
+  margin-top: 18px;
+}
+.repository-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-top: 20px;
+  color: var(--muted);
+  font: 11px var(--mono);
+}
+.repository-breadcrumb button {
+  border: 0;
+  background: transparent;
+  padding-inline: 0;
+  color: var(--green);
+}
+.repository-current {
+  overflow-wrap: anywhere;
+  color: var(--ink);
+}
 .path-separator {
   color: #68765f;
 }
@@ -321,15 +500,28 @@ h3 {
   min-width: 180px;
   max-width: 380px;
 }
-.import-bar label {
+.import-bar label,
+.import-label {
   display: block;
   font-size: 11px;
   font-family: var(--mono);
   color: #bac7ae;
   margin-bottom: 7px;
 }
-.import-bar select {
-  width: 100%;
+.import-repository {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 42px;
+  padding: 9px 12px;
+  border: 1px solid #3a4334;
+  background: #111510;
+  overflow-wrap: anywhere;
+  font: 11px var(--mono);
+}
+.import-repository .icon {
+  flex: none;
+  color: var(--green);
 }
 .page-input {
   width: 105px;
@@ -1750,80 +1942,60 @@ fieldset:disabled .labels label {
 .account-panel > .notice {
   margin-bottom: 18px;
 }
-.account-columns {
-  display: grid;
-  grid-template-columns: minmax(250px, 1fr) minmax(300px, 1.3fr);
-  gap: 34px;
+.account-key-form {
+  max-width: 570px;
 }
-.account-columns label {
+.account-key-form label {
   display: block;
   margin-bottom: 8px;
   font: 12px var(--mono);
 }
-.account-columns input {
+.account-key-form input {
   width: 100%;
 }
-.account-columns p,
-.account-columns small {
+.account-key-form p,
+.account-key-form small {
   display: block;
   color: var(--muted);
   font-size: 12px;
   line-height: 1.8;
   margin-top: 12px;
 }
-.account-columns .key-configured {
+.account-key-form .key-configured {
   color: var(--green);
 }
-.account-columns .actions {
+.account-key-form .actions {
   flex-direction: row;
   flex-wrap: wrap;
 }
-.repo-actions {
-  display: flex;
-  align-items: center;
-  gap: 18px;
-  flex-wrap: wrap;
-  margin-top: 12px;
-}
-.repo-actions a {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-}
-.connections {
-  list-style: none;
-  padding: 0;
-  margin: 18px 0 0;
-  max-height: 340px;
-  overflow: auto;
-}
-.connections li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  border-top: 1px solid var(--line);
-  padding: 10px 0;
-}
-.connections li > span {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  overflow-wrap: anywhere;
-  min-width: 0;
-  font: 11px var(--mono);
-}
-.connections li > button {
-  flex: none;
-}
 @media (max-width: 800px) {
+  .repository-directory {
+    padding: 27px 0 60px;
+  }
+  .directory-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .directory-setup {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .directory-list li {
+    grid-template-columns: 24px minmax(0, 1fr);
+    gap: 10px;
+  }
+  .directory-repo-actions {
+    grid-column: 2;
+    justify-content: flex-start;
+  }
+  .directory-repo-actions button {
+    min-height: 34px;
+  }
+  .directory-count {
+    flex-wrap: wrap;
+  }
   .account-panel {
     padding: 18px;
-  }
-  .account-columns {
-    grid-template-columns: 1fr;
-    gap: 28px;
   }
   .commandbar-tools {
     flex-wrap: wrap;

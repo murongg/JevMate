@@ -4,6 +4,7 @@ import { requireSession } from './oauth';
 
 import { seal } from './vault';
 import { accountAccess, jevKey } from './access';
+import type { AccessibleRepo } from './identity';
 import { consumeLimit, dailyLimit } from './limits';
 import { GitHub } from './github';
 import { allowedLabels, policy } from './policy';
@@ -12,6 +13,15 @@ import { queueAccountJob } from './account-jobs';
 function installUrl(env: Env) {
   if (!/^[a-z0-9-]+$/.test(env.GITHUB_APP_SLUG || '')) return null;
   return `https://github.com/apps/${env.GITHUB_APP_SLUG}/installations/new`;
+}
+function visibleRepoIds(url: URL, connected: AccessibleRepo[]) {
+  const requested = url.searchParams.get('repo');
+  // Existing API clients may omit repo; the dashboard always sends it before pagination.
+  if (requested === null) return connected.map((r) => r.id);
+  const name = repository.parse(requested).toLowerCase();
+  const match = connected.find((r) => r.name === name);
+  if (!match) throw new HttpError(403, 'Repository access is no longer available.');
+  return [match.id];
 }
 export async function accountsApi(
   req: Request,
@@ -107,6 +117,7 @@ export async function accountsApi(
     return Response.json({ ok: true });
   }
   if (url.pathname === '/api/issues' && req.method === 'GET') {
+    const scopedIds = visibleRepoIds(url, access.connected);
     const page = z.coerce
       .number()
       .int()
@@ -116,7 +127,7 @@ export async function accountsApi(
     const rows = await env.DB.prepare(
       'SELECT * FROM account_analyses WHERE user_id=? AND repo_id IN (SELECT value FROM json_each(?)) ORDER BY created_at DESC,id DESC LIMIT 50 OFFSET ?',
     )
-      .bind(userId, JSON.stringify(ids), (page - 1) * 50)
+      .bind(userId, JSON.stringify(scopedIds), (page - 1) * 50)
       .all<Analysis & { repo_id: string }>();
     return Response.json({
       items: rows.results.map((r) => ({
@@ -129,10 +140,11 @@ export async function accountsApi(
     });
   }
   if (url.pathname === '/api/jobs' && req.method === 'GET') {
+    const scopedIds = visibleRepoIds(url, access.connected);
     const rows = await env.DB.prepare(
       "SELECT * FROM account_jobs WHERE user_id=? AND repo_id IN (SELECT value FROM json_each(?)) AND status!='done' ORDER BY created_at DESC LIMIT 50",
     )
-      .bind(userId, JSON.stringify(ids))
+      .bind(userId, JSON.stringify(scopedIds))
       .all();
     return Response.json({
       items: rows.results.map((r) => ({

@@ -96,6 +96,13 @@ async function api(req: Request, env: Env, url: URL): Promise<Response> {
   if (!(await authorized(req, env.ADMIN_TOKEN)))
     throw new HttpError(401, 'Enter the deployment admin token.');
   const repos = allowedRepos(env);
+  const requestedRepo = ['/api/issues', '/api/jobs'].includes(url.pathname)
+    ? url.searchParams.get('repo')
+    : null;
+  const visibleRepos =
+    requestedRepo === null ? repos : [repository.parse(requestedRepo).toLowerCase()];
+  if (requestedRepo !== null && !repos.includes(visibleRepos[0]))
+    throw new HttpError(403, 'Repository is not allowed by this deployment.');
   if (req.method === 'GET' && url.pathname === '/api/config')
     return Response.json({
       repos,
@@ -109,16 +116,16 @@ async function api(req: Request, env: Env, url: URL): Promise<Response> {
       .min(1)
       .max(10000)
       .parse(url.searchParams.get('page') || 1);
-    if (!repos.length) return Response.json({ items: [], page });
+    if (!visibleRepos.length) return Response.json({ items: [], page });
     // Filter before LIMIT so retained snapshots from removed repositories cannot hide current ones.
     const result = await env.DB.prepare(
-      `SELECT * FROM analyses WHERE repo IN (${repos.map(() => '?').join(',')}) ORDER BY created_at DESC,id DESC LIMIT 50 OFFSET ?`,
+      `SELECT * FROM analyses WHERE repo IN (${visibleRepos.map(() => '?').join(',')}) ORDER BY created_at DESC,id DESC LIMIT 50 OFFSET ?`,
     )
-      .bind(...repos, (page - 1) * 50)
+      .bind(...visibleRepos, (page - 1) * 50)
       .all<Analysis>();
     return Response.json({
       items: result.results
-        .filter((row) => repos.includes(row.repo))
+        .filter((row) => visibleRepos.includes(row.repo))
         .map((row) => ({
           ...row,
           decision: JSON.parse(row.decision),
@@ -128,13 +135,15 @@ async function api(req: Request, env: Env, url: URL): Promise<Response> {
     });
   }
   if (req.method === 'GET' && url.pathname === '/api/jobs') {
-    if (!repos.length) return Response.json({ items: [] });
+    if (!visibleRepos.length) return Response.json({ items: [] });
     const result = await env.DB.prepare(
-      `SELECT * FROM jobs WHERE status!='done' AND repo IN (${repos.map(() => '?').join(',')}) ORDER BY created_at DESC LIMIT 50`,
+      `SELECT * FROM jobs WHERE status!='done' AND repo IN (${visibleRepos.map(() => '?').join(',')}) ORDER BY created_at DESC LIMIT 50`,
     )
-      .bind(...repos)
+      .bind(...visibleRepos)
       .all<Job>();
-    return Response.json({ items: result.results.filter((row) => repos.includes(row.repo)) });
+    return Response.json({
+      items: result.results.filter((row) => visibleRepos.includes(row.repo)),
+    });
   }
   if (req.method === 'POST' && url.pathname === '/api/scan') {
     const input = z

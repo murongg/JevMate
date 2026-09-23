@@ -55,6 +55,7 @@ it('restores a GitHub session and saves only the current user’s key using CSRF
   );
   render(<App />);
   await screen.findByText('synthetic-user');
+  fireEvent.click(screen.getByRole('button', { name: 'Account & Jev key' }));
   fireEvent.change(await screen.findByLabelText('Your Jev API key'), {
     target: { value: 'synthetic-private-key-for-test' },
   });
