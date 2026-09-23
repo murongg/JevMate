@@ -4,6 +4,13 @@
 
 Jev 负责判断类型、模块和信息完整度；维护者查看原文、修改建议并确认后，JevMate 才会给 Issue 添加标签。
 
+## 界面
+
+深色 Bot 控制台，包含像素机器人标识、紧凑的审阅分区和按需展开的导入面板。截图使用明确标注的本地模拟数据。
+
+![JevMate 登录控制台](docs/screenshots/connect.png)
+![JevMate 审阅工作台](docs/screenshots/workspace.png)
+
 ## 首版功能
 
 - 接收新建、编辑和重新打开 Issue 的 GitHub Webhook，并验证签名。

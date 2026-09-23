@@ -3,3 +3,6 @@ dist/
 .wrangler/
 .impeccable/
 package-lock.json
+
+wrangler.production.jsonc
+.secrets.production.json

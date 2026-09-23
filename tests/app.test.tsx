@@ -199,3 +199,75 @@ it('relocalizes an existing API error when the language changes', async () => {
   fireEvent.change(screen.getByLabelText('Language'), { target: { value: 'zh-CN' } });
   expect(screen.getByRole('alert').textContent).toBe('请输入此部署的管理令牌。');
 });
+it('keeps import controls out of the inbox until requested and closes them after queuing', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: string) => {
+      if (input === '/api/config')
+        return Response.json({
+          repos: ['example/repo'],
+          labels: ['bug', 'needs-info'],
+          model: 'jev-test',
+        });
+      if (input.startsWith('/api/issues?')) return Response.json({ items: [item], page: 1 });
+      if (input === '/api/jobs') return Response.json({ items: [] });
+      if (input === '/api/scan') return Response.json({ queued: 1, page: 1 }, { status: 202 });
+      throw Error(input);
+    }),
+  );
+  render(<App />);
+  fireEvent.change(screen.getByLabelText('Admin token'), { target: { value: token } });
+  fireEvent.click(screen.getByRole('button', { name: 'Open workspace' }));
+  await screen.findByRole('heading', { name: 'Synthetic issue' });
+  expect(screen.queryByLabelText('GitHub page')).toBeNull();
+  const toggle = screen.getByRole('button', { name: 'Import issues' });
+  expect(toggle.getAttribute('aria-expanded')).toBe('false');
+  fireEvent.click(toggle);
+  expect(screen.getByLabelText('GitHub page')).toBeTruthy();
+  fireEvent.click(screen.getByRole('button', { name: 'Import this page' }));
+  await screen.findByRole('status');
+  expect(screen.queryByLabelText('GitHub page')).toBeNull();
+  expect(fetch).toHaveBeenCalledWith(
+    '/api/scan',
+    expect.objectContaining({ body: JSON.stringify({ repo: 'example/repo', page: 1 }) }),
+  );
+});
+it('keeps source text and Bot decisions tied to the same selected issue in the split workspace', async () => {
+  const second = {
+    ...item,
+    id: 'c'.repeat(64),
+    number: 2,
+    title: 'Second synthetic report',
+    body: 'A different synthetic report body.',
+    decision: { ...item.decision, labels: ['bug'] },
+  };
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (input: string) => {
+      if (input === '/api/config')
+        return Response.json({
+          repos: ['example/repo'],
+          labels: ['bug', 'needs-info'],
+          model: 'jev-test',
+        });
+      if (input.startsWith('/api/issues?'))
+        return Response.json({ items: [item, second], page: 1 });
+      if (input === '/api/jobs') return Response.json({ items: [] });
+      throw Error(input);
+    }),
+  );
+  render(<App />);
+  fireEvent.change(screen.getByLabelText('Admin token'), { target: { value: token } });
+  fireEvent.click(screen.getByRole('button', { name: 'Open workspace' }));
+  await screen.findByRole('heading', { name: 'Synthetic issue' });
+  expect(screen.getByRole('region', { name: 'Original issue' }).textContent).toContain(item.body);
+  expect(
+    screen
+      .getByRole('region', { name: 'Bot assessment' })
+      .contains(screen.getByRole('checkbox', { name: 'bug' })),
+  ).toBe(true);
+  fireEvent.click(screen.getByRole('button', { name: /#2.*Second synthetic report/ }));
+  expect(screen.getByRole('region', { name: 'Original issue' }).textContent).toContain(second.body);
+  expect(screen.queryByText(item.body)).toBeNull();
+  expect(screen.getByRole('checkbox', { name: 'needs-info' })).toHaveProperty('checked', false);
+});

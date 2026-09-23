@@ -37,3 +37,7 @@ MIT is the proposed default license for this implementation. The source reposito
 ## Localization
 
 The user requested a multilingual interface with English as the default. The implementation ships English and Simplified Chinese with a persisted explicit preference. Issue content and GitHub label identifiers remain in their original language.
+
+## Visual direction
+
+The user requested a more bot-like, geeky and distinctive product. The current interface is a dark operator console with a pixel robot identity, green operational accents and readable source text.
