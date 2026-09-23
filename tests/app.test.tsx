@@ -40,7 +40,7 @@ function mockApi() {
           model: 'jev-test',
         });
       if (input.startsWith('/api/issues?')) return Response.json({ items: [item], page: 1 });
-      if (input === '/api/jobs') return Response.json({ items: [] });
+      if (input.startsWith('/api/jobs')) return Response.json({ items: [] });
       if (input.endsWith('/apply')) return Response.json({ ok: true });
       throw Error(input);
     }),
@@ -120,7 +120,7 @@ it.each(['Confirm and add labels', 'Skip suggestion'])(
           });
         if (input.startsWith('/api/issues?'))
           return Response.json({ items: handled ? [second] : [item, second], page: 1 });
-        if (input === '/api/jobs') return Response.json({ items: [] });
+        if (input.startsWith('/api/jobs')) return Response.json({ items: [] });
         if (input.endsWith('/apply') || input.endsWith('/dismiss')) {
           handled = true;
           return Response.json({ ok: true });
@@ -221,7 +221,7 @@ it('keeps import controls out of the inbox until requested and closes them after
           model: 'jev-test',
         });
       if (input.startsWith('/api/issues?')) return Response.json({ items: [item], page: 1 });
-      if (input === '/api/jobs') return Response.json({ items: [] });
+      if (input.startsWith('/api/jobs')) return Response.json({ items: [] });
       if (input === '/api/scan') return Response.json({ queued: 1, page: 1 }, { status: 202 });
       throw Error(input);
     }),
@@ -263,7 +263,7 @@ it('keeps source text and Bot decisions tied to the same selected issue in the s
         });
       if (input.startsWith('/api/issues?'))
         return Response.json({ items: [item, second], page: 1 });
-      if (input === '/api/jobs') return Response.json({ items: [] });
+      if (input.startsWith('/api/jobs')) return Response.json({ items: [] });
       throw Error(input);
     }),
   );

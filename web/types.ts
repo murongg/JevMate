@@ -11,6 +11,7 @@ export interface Config {
 }
 export interface Snapshot {
   config: Config;
+  repo: string;
   items: Review[];
   jobs: Job[];
   page: number;

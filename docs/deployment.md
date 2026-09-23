@@ -90,6 +90,7 @@ npm run deploy
 ## Public GitHub login
 
 Apply all D1 migrations before enabling this mode. `0002.sql` adds separate account tables; it does not delete legacy jobs or history.
+For upgrades, `0003.sql` adds indexes for repository-scoped dashboard pagination without changing stored records. Apply it before deploying the repository dashboard.
 
 1. In the GitHub App **General** settings, set **Redirect URI** to `<worker-url>/auth/callback` with wildcard matching off. Set **Setup URL** to `<worker-url>/` so installation returns to the workspace.
 2. In **Advanced**, make the App public so any account can install it. Keep Issues read/write and Metadata read; no additional repository permissions are needed. Login happens before installation, so OAuth during installation is optional and not required.
@@ -123,7 +124,7 @@ npm run db:remote
 npm run deploy
 ```
 
-Sign in with GitHub, open **Account & repositories**, save your Jev key, install the App on selected repositories, refresh the repository list and connect a repository. Import an issue to verify analysis; applying labels remains an explicit action. Refreshing the page restores the session. Signing out clears that browser session. Removing the Jev key also pauses all that user’s connections; reconnect them after saving a new key.
+Sign in with GitHub, open **Account & repositories**, save your Jev key, install the App on selected repositories, refresh the repository list, search by repository name and connect one. Its dashboard becomes the active view. Use the repository switcher to move between connected repositories; Issues, jobs, history and imports are scoped to the selected repository. Import an issue to verify analysis; applying labels remains an explicit action. Refreshing the page restores the session. Signing out clears that browser session. Removing the Jev key also pauses all that user’s connections; reconnect them after saving a new key.
 
 Credentials are encrypted using AES-GCM with per-user context. Back up `CREDENTIAL_KEY` securely and keep it stable: replacing it without a data migration makes existing encrypted credentials unreadable. Secrets never belong in source control or frontend environment variables. Sessions use Secure/HttpOnly/SameSite cookies, CSRF tokens and seven-day expiration. OAuth uses PKCE and one-use browser-bound state. Revoking GitHub authorization invalidates sessions and pauses connections.
 
@@ -138,7 +139,7 @@ Use HTTPS for production. For local OAuth, register an exact local callback and 
 ## Smoke checks
 
 1. Open `<worker-url>/health`; expect `{"ok":true,"service":"JevRepoTriage"}`. This checks the endpoint, not credentials.
-2. Open the root page and enter your admin token. Confirm the repository dropdown matches your allowlist.
+2. In legacy mode, enter your admin token and confirm the repository switcher matches your allowlist. In GitHub mode, sign in, search available repositories by name, and connect a test repository. Confirm its dashboard shows only its own records.
 3. Use a test repository and create a synthetic issue. In the GitHub App's recent webhook deliveries, confirm a `202` response. The job should appear in JevRepoTriage after refreshing, followed by a suggestion. A `ping` returns `200`.
 4. Read the original report and choose an existing label. Click **Confirm and add labels**. Confirm that it appears on GitHub and existing labels remain.
 5. Create another synthetic issue, wait for analysis, then edit its body before applying the original suggestion. The stale suggestion must be rejected; refresh/import to inspect the new analysis.

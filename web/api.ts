@@ -23,11 +23,16 @@ export function client(token: string, csrf?: string): Call {
     return data as T;
   };
 }
-export async function snapshot(call: Call, page: number): Promise<Snapshot> {
-  const [config, issues, jobs] = await Promise.all([
-    call<Config>('/api/config'),
-    call<{ items: Review[]; page: number }>(`/api/issues?page=${page}`),
-    call<{ items: Job[] }>('/api/jobs'),
+export async function snapshot(call: Call, page: number, preferredRepo = ''): Promise<Snapshot> {
+  const config = await call<Config>('/api/config');
+  const repo = config.repos.includes(preferredRepo) ? preferredRepo : config.repos[0] || '';
+  if (!repo) return { config, repo, items: [], jobs: [], page: 1 };
+  const currentPage = repo === preferredRepo ? page : 1;
+  const scope = encodeURIComponent(repo);
+  // Scope on the server before LIMIT/OFFSET so a busy repository cannot hide another one's records.
+  const [issues, jobs] = await Promise.all([
+    call<{ items: Review[]; page: number }>(`/api/issues?page=${currentPage}&repo=${scope}`),
+    call<{ items: Job[] }>(`/api/jobs?repo=${scope}`),
   ]);
-  return { config, items: issues.items, jobs: jobs.items, page };
+  return { config, repo, items: issues.items, jobs: jobs.items, page: currentPage };
 }

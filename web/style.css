@@ -236,6 +236,108 @@ h3 {
   margin: 0 auto;
   padding: 0 28px;
 }
+.repository-dashboard {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  position: relative;
+  z-index: 3;
+  margin-top: 24px;
+  padding: 16px 20px;
+  border: 1px solid #394930;
+  border-left: 3px solid var(--green);
+  background: #1b2318;
+}
+.repository-dashboard-meta {
+  display: flex;
+  flex-direction: column;
+  min-width: 190px;
+  font: 10px var(--mono);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--green);
+}
+.repository-dashboard-meta span + span {
+  margin-top: 4px;
+  color: var(--muted);
+  text-transform: none;
+  letter-spacing: 0;
+}
+.repository-picker {
+  position: relative;
+  flex: 1;
+  max-width: 640px;
+  min-width: 0;
+}
+.repository-trigger {
+  width: 100%;
+  justify-content: flex-start;
+  text-align: left;
+  padding-inline: 14px;
+  background: #111810;
+  border-color: #536747;
+  color: #ecf5e3;
+  font: 600 14px var(--mono);
+}
+.repository-trigger > span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.repository-trigger .icon:last-child {
+  transform: rotate(90deg);
+  width: 14px;
+}
+.repository-options {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  z-index: 5;
+  padding: 14px;
+  background: #171e15;
+  border: 1px solid #536747;
+  box-shadow: 0 18px 35px #080c08c7;
+}
+.repository-options label {
+  display: block;
+  margin-bottom: 7px;
+  color: #b9c7ac;
+  font: 11px var(--mono);
+}
+.repository-options input {
+  width: 100%;
+}
+.repository-options ul {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0 0;
+  max-height: 280px;
+  overflow: auto;
+}
+.repository-options li + li {
+  border-top: 1px solid var(--line);
+}
+.repository-options li button {
+  width: 100%;
+  justify-content: flex-start;
+  border: 0;
+  background: transparent;
+  padding: 10px;
+  text-align: left;
+  overflow-wrap: anywhere;
+  font: 11px var(--mono);
+}
+.repository-options li button:hover,
+.repository-options li button[aria-current='page'] {
+  background: #27351f;
+  color: var(--green);
+}
+.repository-options p {
+  color: var(--muted);
+  margin: 14px 0 2px;
+}
 .path-separator {
   color: #68765f;
 }
@@ -321,15 +423,28 @@ h3 {
   min-width: 180px;
   max-width: 380px;
 }
-.import-bar label {
+.import-bar label,
+.import-label {
   display: block;
   font-size: 11px;
   font-family: var(--mono);
   color: #bac7ae;
   margin-bottom: 7px;
 }
-.import-bar select {
-  width: 100%;
+.import-repository {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 42px;
+  padding: 9px 12px;
+  border: 1px solid #3a4334;
+  background: #111510;
+  overflow-wrap: anywhere;
+  font: 11px var(--mono);
+}
+.import-repository .icon {
+  flex: none;
+  color: var(--green);
 }
 .page-input {
   width: 105px;
@@ -1791,6 +1906,12 @@ fieldset:disabled .labels label {
   gap: 6px;
   font-size: 12px;
 }
+.available-repository-search {
+  margin-top: 18px;
+}
+.available-repository-search small {
+  margin-top: 6px;
+}
 .connections {
   list-style: none;
   padding: 0;
@@ -1818,6 +1939,16 @@ fieldset:disabled .labels label {
   flex: none;
 }
 @media (max-width: 800px) {
+  .repository-dashboard {
+    display: block;
+    padding: 15px;
+  }
+  .repository-dashboard-meta {
+    margin-bottom: 12px;
+  }
+  .repository-trigger {
+    font-size: 12px;
+  }
   .account-panel {
     padding: 18px;
   }

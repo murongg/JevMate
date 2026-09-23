@@ -24,7 +24,7 @@ The project is named JevRepoTriage. The app runs on Cloudflare Workers and lets 
 
 ## Capabilities and Constraints
 
-Public GitHub sign-in, isolated personal workspaces, encrypted per-user Jev keys, multiple installations, asynchronous analysis, additive labels after manual confirmation, imports and retryable failures. No automatic comments, closing issues, code execution, or PR review in this version. Labels and module criteria come from policy.json. The model service is external; this project does not distribute model weights.
+Public GitHub sign-in, isolated personal workspaces, encrypted per-user Jev keys, multiple installations, searchable repository dashboards, asynchronous analysis, additive labels after manual confirmation, imports and retryable failures. No automatic comments, closing issues, code execution, or PR review in this version. Labels and module criteria come from policy.json. The model service is external; this project does not distribute model weights.
 
 ## Evidence on Hand
 

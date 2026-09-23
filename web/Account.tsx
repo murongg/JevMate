@@ -10,35 +10,44 @@ export default function Account({
 }: {
   call: Call;
   session: UserSession;
-  onChanged: () => Promise<void>;
+  onChanged: (preferredRepo?: string) => Promise<void>;
   onClose: () => void;
 }) {
   const { t, error: localizeError } = useI18n();
   const [key, setKey] = useState(''),
     [repos, setRepos] = useState<ConnectedRepository[]>([]),
+    [repoQuery, setRepoQuery] = useState(''),
+    [loadingRepos, setLoadingRepos] = useState(true),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(''),
     [notice, setNotice] = useState(false);
   useEffect(() => {
     let active = true;
+    setLoadingRepos(true);
     call<{ repositories: ConnectedRepository[] }>('/api/connections')
       .then((data) => {
-        if (active) setRepos(data.repositories);
+        if (active) {
+          setRepos(data.repositories);
+          setLoadingRepos(false);
+        }
       })
       .catch((e) => {
-        if (active) setError(e instanceof Error ? e.message : 'Operation failed. Try again.');
+        if (active) {
+          setError(e instanceof Error ? e.message : 'Operation failed. Try again.');
+          setLoadingRepos(false);
+        }
       });
     return () => {
       active = false;
     };
   }, [call]);
-  async function act(action: () => Promise<unknown>) {
+  async function act(action: () => Promise<unknown>, preferredRepo?: string) {
     setBusy(true);
     setError('');
     setNotice(false);
     try {
       await action();
-      await onChanged();
+      await onChanged(preferredRepo);
       const data = await call<{ repositories: ConnectedRepository[] }>('/api/connections');
       setRepos(data.repositories);
       setNotice(true);
@@ -48,6 +57,11 @@ export default function Account({
       setBusy(false);
     }
   }
+  const term = repoQuery.trim().toLowerCase();
+  const matchingRepos = term
+    ? repos.filter((repo) => repo.name.toLowerCase().includes(term))
+    : repos.filter((repo) => repo.connected);
+  const shownRepos = matchingRepos.slice(0, 30);
   return (
     <section className="account-panel" aria-label={t('accountTitle')}>
       <header>
@@ -123,9 +137,31 @@ export default function Account({
               {t('refreshRepos')}
             </button>
           </div>
-          {!repos.length && <p>{t('noAvailableRepos')}</p>}
+          {!!repos.length && (
+            <div className="available-repository-search">
+              <label htmlFor="available-repositories">{t('searchAvailableRepos')}</label>
+              <input
+                id="available-repositories"
+                type="search"
+                value={repoQuery}
+                onChange={(event) => setRepoQuery(event.target.value)}
+                placeholder={t('searchReposPlaceholder')}
+              />
+              <small>
+                {term
+                  ? t('repoSearchResults', {
+                      shown: shownRepos.length,
+                      total: matchingRepos.length,
+                    })
+                  : t('repoSearchPrompt', { count: repos.length })}
+              </small>
+            </div>
+          )}
+          {loadingRepos && <p role="status">{t('loadingRepos')}</p>}
+          {!loadingRepos && !repos.length && <p>{t('noAvailableRepos')}</p>}
+          {!!term && !matchingRepos.length && <p>{t('noRepoMatches')}</p>}
           <ul className="connections">
-            {repos.map((repo) => (
+            {shownRepos.map((repo) => (
               <li key={repo.id}>
                 <span>
                   <Icon name="repo" />
@@ -134,10 +170,12 @@ export default function Account({
                 <button
                   disabled={busy || (!repo.connected && !session.keyConfigured)}
                   onClick={() =>
-                    act(() =>
-                      call(repo.connected ? '/api/connections/disconnect' : '/api/connections', {
-                        repoId: repo.id,
-                      }),
+                    act(
+                      () =>
+                        call(repo.connected ? '/api/connections/disconnect' : '/api/connections', {
+                          repoId: repo.id,
+                        }),
+                      repo.connected ? undefined : repo.name,
                     )
                   }
                 >

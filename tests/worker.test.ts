@@ -26,12 +26,13 @@ beforeAll(async () => {
     }),
   );
   const db = await mf.getD1Database('DB');
-  await db.exec(
-    (await readFile(new URL('../migrations/0001.sql', import.meta.url), 'utf8')).replace(
-      /\n/g,
-      ' ',
-    ),
-  );
+  for (const file of ['0001.sql', '0002.sql', '0003.sql'])
+    await db.exec(
+      (await readFile(new URL('../migrations/' + file, import.meta.url), 'utf8')).replace(
+        /\n/g,
+        ' ',
+      ),
+    );
   const keys = await generateKeyPair('RS256', { extractable: true });
   env = {
     DB: db as unknown as D1Database,
@@ -56,6 +57,7 @@ afterAll(async () => {
   await mf?.dispose();
 });
 beforeEach(async () => {
+  env.ALLOWED_REPOS = 'example/repo';
   await env.DB.batch([env.DB.prepare('DELETE FROM analyses'), env.DB.prepare('DELETE FROM jobs')]);
   sent.length = 0;
   writes = [];
@@ -256,4 +258,58 @@ it('filters removed repositories before pagination so allowed records remain rea
   const res = await api('/api/issues');
   const data = (await res.json()) as { items: { repo: string }[] };
   expect(data.items.map((item) => item.repo)).toEqual(['example/repo']);
+});
+it('paginates legacy dashboards within the requested allowlisted repository', async () => {
+  env.ALLOWED_REPOS = 'example/repo,example/second';
+  const row = await analyze();
+  await env.DB.batch(
+    Array.from({ length: 50 }, (_, i) =>
+      env.DB.prepare(
+        'INSERT INTO analyses(id,repo,number,title,body,decision,created_at) VALUES(?,?,?,?,?,?,?)',
+      ).bind(
+        String(i + 1).padStart(64, 'b'),
+        'example/repo',
+        i + 2,
+        'Synthetic first-repo report',
+        '',
+        row.decision,
+        '2099-01-01T00:00:00Z',
+      ),
+    ),
+  );
+  await env.DB.prepare(
+    'INSERT INTO analyses(id,repo,number,title,body,decision,created_at) VALUES(?,?,?,?,?,?,?)',
+  )
+    .bind(
+      'e'.repeat(64),
+      'example/second',
+      1,
+      'Synthetic second-repo report',
+      '',
+      row.decision,
+      '2020-01-01T00:00:00Z',
+    )
+    .run();
+  await env.DB.batch([
+    env.DB.prepare('INSERT INTO jobs(id,repo,number) VALUES(?,?,?)').bind(
+      'first-job',
+      'example/repo',
+      2,
+    ),
+    env.DB.prepare('INSERT INTO jobs(id,repo,number) VALUES(?,?,?)').bind(
+      'second-job',
+      'example/second',
+      1,
+    ),
+  ]);
+  const issues = await api('/api/issues?page=1&repo=example%2Fsecond');
+  expect(((await issues.json()) as { items: { repo: string }[] }).items.map((x) => x.repo)).toEqual(
+    ['example/second'],
+  );
+  const jobs = await api('/api/jobs?repo=example%2Fsecond');
+  expect(((await jobs.json()) as { items: { id: string }[] }).items.map((x) => x.id)).toEqual([
+    'second-job',
+  ]);
+  expect((await api('/api/issues?repo=unknown%2Frepo')).status).toBe(403);
+  expect((await api('/api/config?repo=unknown%2Frepo')).status).toBe(200);
 });

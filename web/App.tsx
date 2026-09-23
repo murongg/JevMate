@@ -5,6 +5,7 @@ import { I18nProvider, useI18n, type Message } from './I18n';
 import Language from './Language';
 import type { Call, Snapshot, UserSession } from './types';
 import Account from './Account';
+import RepositoryPicker from './RepositoryPicker';
 import Brand from './Brand';
 import Bot from './Bot';
 import Icon from './Icon';
@@ -27,8 +28,7 @@ function Workspace() {
   const [filter, setFilter] = useState('pending'),
     [query, setQuery] = useState(''),
     [selected, setSelected] = useState<string | null>(null);
-  const [repo, setRepo] = useState(''),
-    [scanPage, setScanPage] = useState(1),
+  const [scanPage, setScanPage] = useState(1),
     [mobileDetail, setMobileDetail] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [boot, setBoot] = useState<{
@@ -54,7 +54,6 @@ function Workspace() {
               setSession(identity);
               setApi(() => call);
               setData(next);
-              setRepo(next.config.repos[0] || '');
               setAccountOpen(!identity.keyConfigured || !next.config.repos.length);
             }
           } else if (response.status !== 401) throw new Error('Connection failed. Try again.');
@@ -71,12 +70,33 @@ function Workspace() {
       active = false;
     };
   }, []);
-  async function refreshAccount() {
+  async function refreshAccount(preferredRepo?: string) {
     if (!api) return;
     setSession(await api<UserSession>('/api/session'));
-    const next = await snapshot(api, 1);
+    const next = await snapshot(api, 1, preferredRepo || data?.repo);
     setData(next);
-    setRepo(next.config.repos[0] || '');
+    setSelected(null);
+    setMobileDetail(false);
+  }
+  async function switchRepository(nextRepo: string) {
+    if (!api || !data || nextRepo === data.repo) return;
+    setBusy(true);
+    setError('');
+    setNotice(null);
+    try {
+      const next = await snapshot(api, 1, nextRepo);
+      setData(next);
+      setSelected(null);
+      setQuery('');
+      setFilter('pending');
+      setScanPage(1);
+      setImportOpen(false);
+      setMobileDetail(false);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Operation failed. Try again.');
+    } finally {
+      setBusy(false);
+    }
   }
   async function logout() {
     setBusy(true);
@@ -112,7 +132,6 @@ function Workspace() {
       const next = await snapshot(call, 1);
       setApi(() => call);
       setData(next);
-      setRepo(next.config.repos[0] || '');
       setToken('');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Connection failed. Try again.');
@@ -129,7 +148,7 @@ function Workspace() {
       // Resolve notices at render time so a language switch during the request is respected.
       const message = await operation(api);
       if (message) setNotice(message);
-      setData(await snapshot(api, page));
+      setData(await snapshot(api, page, data?.repo));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Operation failed. Try again.');
     } finally {
@@ -250,6 +269,7 @@ function Workspace() {
     );
   const visible = data.items.filter(
     (item) =>
+      item.repo === data.repo &&
       (filter === 'all' ||
         (filter === 'pending'
           ? ['pending', 'applying'].includes(item.status)
@@ -296,6 +316,18 @@ function Workspace() {
             onClose={() => setAccountOpen(false)}
           />
         )}
+        <section className="repository-dashboard" aria-label={t('repoDashboard')}>
+          <div className="repository-dashboard-meta">
+            <span>{t('repoDashboard')}</span>
+            <span>{t('connectedRepoCount', { count: data.config.repos.length })}</span>
+          </div>
+          <RepositoryPicker
+            repos={data.config.repos}
+            selected={data.repo}
+            disabled={busy}
+            onSelect={switchRepository}
+          />
+        </section>
         <header className="workspace-header">
           <div>
             <h1>
@@ -368,29 +400,21 @@ function Workspace() {
             onSubmit={(e) => {
               e.preventDefault();
               run(async (call) => {
-                const res = await call<{ queued: number }>('/api/scan', { repo, page: scanPage });
+                const res = await call<{ queued: number }>('/api/scan', {
+                  repo: data.repo,
+                  page: scanPage,
+                });
                 setImportOpen(false);
                 return { key: 'queued', params: { count: res.queued } };
               });
             }}
           >
             <div>
-              <label htmlFor="repo">{t('importIssues')}</label>
-              <select
-                id="repo"
-                value={repo}
-                onChange={(e) => {
-                  setRepo(e.target.value);
-                  setScanPage(1);
-                }}
-                disabled={!data.config.repos.length}
-              >
-                {data.config.repos.length ? (
-                  data.config.repos.map((r) => <option key={r}>{r}</option>)
-                ) : (
-                  <option value="">{t('noRepositories')}</option>
-                )}
-              </select>
+              <span className="import-label">{t('importIssues')}</span>
+              <span className="import-repository">
+                <Icon name="repo" />
+                {data.repo || t('noRepositories')}
+              </span>
             </div>
             <div className="page-input">
               <label htmlFor="scan-page">{t('githubPage')}</label>
@@ -404,7 +428,7 @@ function Workspace() {
                 onChange={(e) => setScanPage(Number(e.target.value))}
               />
             </div>
-            <button disabled={busy || !repo}>{t('importPage')}</button>
+            <button disabled={busy || !data.repo}>{t('importPage')}</button>
             <small>{t('importHint')}</small>
           </form>
         )}
