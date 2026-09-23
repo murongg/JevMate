@@ -64,6 +64,7 @@ it('requires authentication, loads review data, and sends only selected labels',
   expect(screen.queryByText('Synthetic issue')).toBeNull();
   fireEvent.change(await screen.findByLabelText('Admin token'), { target: { value: token } });
   fireEvent.click(screen.getByRole('button', { name: 'Open workspace' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Open example/repo dashboard' }));
   await screen.findByRole('heading', { name: 'Synthetic issue' });
   expect(screen.getByText('<script>alert(1)</script>')).toBeTruthy();
   fireEvent.click(screen.getByRole('checkbox', { name: 'needs-info' }));
@@ -99,6 +100,7 @@ it('has a working logout action that removes private issue content', async () =>
   render(<App />);
   fireEvent.change(await screen.findByLabelText('Admin token'), { target: { value: token } });
   fireEvent.click(screen.getByRole('button', { name: 'Open workspace' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Open example/repo dashboard' }));
   await screen.findByRole('heading', { name: 'Synthetic issue' });
   fireEvent.click(screen.getByRole('button', { name: 'Sign out' }));
   expect(screen.queryByText('Synthetic issue')).toBeNull();
@@ -131,6 +133,7 @@ it.each(['Confirm and add labels', 'Skip suggestion'])(
     render(<App />);
     fireEvent.change(await screen.findByLabelText('Admin token'), { target: { value: token } });
     fireEvent.click(screen.getByRole('button', { name: 'Open workspace' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Open example/repo dashboard' }));
     await screen.findByRole('heading', { name: 'Synthetic issue' });
     fireEvent.click(screen.getByRole('button', { name: /#1.*Synthetic issue/ }));
     expect(screen.getByRole('region', { name: 'Issue review' }).className).toContain('show-detail');
@@ -182,6 +185,7 @@ it('switches workspace copy without resetting label selections or translating is
   render(<App />);
   fireEvent.change(await screen.findByLabelText('Admin token'), { target: { value: token } });
   fireEvent.click(screen.getByRole('button', { name: 'Open workspace' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Open example/repo dashboard' }));
   await screen.findByRole('heading', { name: 'Synthetic issue' });
   fireEvent.click(screen.getByRole('checkbox', { name: 'needs-info' }));
   fireEvent.change(screen.getByLabelText('Language'), { target: { value: 'zh-CN' } });
@@ -229,6 +233,7 @@ it('keeps import controls out of the inbox until requested and closes them after
   render(<App />);
   fireEvent.change(await screen.findByLabelText('Admin token'), { target: { value: token } });
   fireEvent.click(screen.getByRole('button', { name: 'Open workspace' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Open example/repo dashboard' }));
   await screen.findByRole('heading', { name: 'Synthetic issue' });
   expect(screen.queryByLabelText('GitHub page')).toBeNull();
   const toggle = screen.getByRole('button', { name: 'Import issues' });
@@ -270,6 +275,7 @@ it('keeps source text and Bot decisions tied to the same selected issue in the s
   render(<App />);
   fireEvent.change(await screen.findByLabelText('Admin token'), { target: { value: token } });
   fireEvent.click(screen.getByRole('button', { name: 'Open workspace' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Open example/repo dashboard' }));
   await screen.findByRole('heading', { name: 'Synthetic issue' });
   expect(screen.getByRole('region', { name: 'Original issue' }).textContent).toContain(item.body);
   expect(

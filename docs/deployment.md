@@ -124,7 +124,7 @@ npm run db:remote
 npm run deploy
 ```
 
-Sign in with GitHub, open **Account & repositories**, save your Jev key, install the App on selected repositories, refresh the repository list, search by repository name and connect one. Its dashboard becomes the active view. Use the repository switcher to move between connected repositories; Issues, jobs, history and imports are scoped to the selected repository. Import an issue to verify analysis; applying labels remains an explicit action. Refreshing the page restores the session. Signing out clears that browser session. Removing the Jev key also pauses all that user’s connections; reconnect them after saving a new key.
+Sign in with GitHub to reach the repository directory. Open **Account & Jev key** to save your key, then install the App on selected repositories if needed. Refresh and search the directory by owner/repository name. Open a connected repository, or connect an available one and enter its dashboard. **All repositories** returns to the directory; Issues, jobs, history and imports are scoped to the selected repository. Import an issue to verify analysis; applying labels remains an explicit action. Refreshing the page restores the session at the repository directory. Signing out clears that browser session. Removing the Jev key also pauses all that user’s connections; reconnect them after saving a new key.
 
 Credentials are encrypted using AES-GCM with per-user context. Back up `CREDENTIAL_KEY` securely and keep it stable: replacing it without a data migration makes existing encrypted credentials unreadable. Secrets never belong in source control or frontend environment variables. Sessions use Secure/HttpOnly/SameSite cookies, CSRF tokens and seven-day expiration. OAuth uses PKCE and one-use browser-bound state. Revoking GitHub authorization invalidates sessions and pauses connections.
 
@@ -139,7 +139,7 @@ Use HTTPS for production. For local OAuth, register an exact local callback and 
 ## Smoke checks
 
 1. Open `<worker-url>/health`; expect `{"ok":true,"service":"JevRepoTriage"}`. This checks the endpoint, not credentials.
-2. In legacy mode, enter your admin token and confirm the repository switcher matches your allowlist. In GitHub mode, sign in, search available repositories by name, and connect a test repository. Confirm its dashboard shows only its own records.
+2. In legacy mode, enter your admin token and confirm the repository directory matches your allowlist. In GitHub mode, sign in, search available repositories by name, and connect a test repository. Confirm the Issue inbox appears only after entering that repository, then use **All repositories** to return.
 3. Use a test repository and create a synthetic issue. In the GitHub App's recent webhook deliveries, confirm a `202` response. The job should appear in JevRepoTriage after refreshing, followed by a suggestion. A `ping` returns `200`.
 4. Read the original report and choose an existing label. Click **Confirm and add labels**. Confirm that it appears on GitHub and existing labels remain.
 5. Create another synthetic issue, wait for analysis, then edit its body before applying the original suggestion. The stale suggestion must be rejected; refresh/import to inspect the new analysis.

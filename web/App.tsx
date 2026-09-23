@@ -5,7 +5,7 @@ import { I18nProvider, useI18n, type Message } from './I18n';
 import Language from './Language';
 import type { Call, Snapshot, UserSession } from './types';
 import Account from './Account';
-import RepositoryPicker from './RepositoryPicker';
+import RepositoryDirectory from './RepositoryDirectory';
 import Brand from './Brand';
 import Bot from './Bot';
 import Icon from './Icon';
@@ -27,6 +27,7 @@ function Workspace() {
     [notice, setNotice] = useState<Message | null>(null);
   const [filter, setFilter] = useState('pending'),
     [query, setQuery] = useState(''),
+    [repoQuery, setRepoQuery] = useState(''),
     [selected, setSelected] = useState<string | null>(null);
   const [scanPage, setScanPage] = useState(1),
     [mobileDetail, setMobileDetail] = useState(false);
@@ -54,7 +55,6 @@ function Workspace() {
               setSession(identity);
               setApi(() => call);
               setData(next);
-              setAccountOpen(!identity.keyConfigured || !next.config.repos.length);
             }
           } else if (response.status !== 401) throw new Error('Connection failed. Try again.');
         }
@@ -70,10 +70,10 @@ function Workspace() {
       active = false;
     };
   }, []);
-  async function refreshAccount(preferredRepo?: string) {
+  async function refreshAccount() {
     if (!api) return;
     setSession(await api<UserSession>('/api/session'));
-    const next = await snapshot(api, 1, preferredRepo || data?.repo);
+    const next = await snapshot(api, 1, data?.repo);
     setData(next);
     setSelected(null);
     setMobileDetail(false);
@@ -94,9 +94,31 @@ function Workspace() {
       setMobileDetail(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Operation failed. Try again.');
+      throw e;
     } finally {
       setBusy(false);
     }
+  }
+  function returnToRepositories() {
+    if (!data) return;
+    setData({ ...data, repo: '', items: [], jobs: [], page: 1 });
+    setSelected(null);
+    setQuery('');
+    setFilter('pending');
+    setScanPage(1);
+    setImportOpen(false);
+    setMobileDetail(false);
+    setError('');
+    setNotice(null);
+    setAccountOpen(false);
+  }
+  function openKeySettings() {
+    setAccountOpen(true);
+    requestAnimationFrame(() => {
+      const field = document.getElementById('jev-key');
+      field?.scrollIntoView?.({ block: 'center' });
+      field?.focus();
+    });
   }
   async function logout() {
     setBusy(true);
@@ -108,6 +130,7 @@ function Workspace() {
       setSession(null);
       setNotice(null);
       setSelected(null);
+      setRepoQuery('');
       setMobileDetail(false);
       setAccountOpen(false);
     } catch (e) {
@@ -316,283 +339,297 @@ function Workspace() {
             onClose={() => setAccountOpen(false)}
           />
         )}
-        <section className="repository-dashboard" aria-label={t('repoDashboard')}>
-          <div className="repository-dashboard-meta">
-            <span>{t('repoDashboard')}</span>
-            <span>{t('connectedRepoCount', { count: data.config.repos.length })}</span>
-          </div>
-          <RepositoryPicker
-            repos={data.config.repos}
-            selected={data.repo}
-            disabled={busy}
-            onSelect={switchRepository}
+        {!data.repo ? (
+          <RepositoryDirectory
+            call={api}
+            session={session}
+            configured={data.config.repos}
+            query={repoQuery}
+            onQueryChange={setRepoQuery}
+            onOpen={switchRepository}
+            onManageKey={openKeySettings}
+            onChanged={refreshAccount}
           />
-        </section>
-        <header className="workspace-header">
-          <div>
-            <h1>
-              {t('inbox')}
-              <span className="headline-count" aria-hidden="true">
-                {data.items.length}
-              </span>
-            </h1>
-            <p>{t('inboxIntro')}</p>
-          </div>
-          <div className="workspace-tools">
-            <button className="refresh-button" disabled={busy} onClick={() => run(async () => {})}>
-              <Icon name="refresh" className={busy ? 'spin' : ''} />
-              {busy ? t('syncing') : t('refresh')}
-            </button>
-            <button
-              className="import-toggle"
-              aria-expanded={importOpen}
-              aria-controls="import-panel"
-              onClick={() => setImportOpen((open) => !open)}
-            >
-              <Icon name={importOpen ? 'close' : 'download'} />
-              {t('importToggle')}
-            </button>
-          </div>
-        </header>
-        <div className="scopebar">
-          {' '}
-          <nav aria-label={t('viewScope')}>
-            {[
-              ['pending', t('pending')],
-              ['all', t('allRecords')],
-              ['applied', t('applied')],
-              ['dismissed', t('dismissed')],
-            ].map(([value, name]) => (
-              <button
-                key={value}
-                className={filter === value ? 'active' : ''}
-                aria-pressed={filter === value}
-                onClick={() => {
-                  setFilter(value);
-                  setMobileDetail(false);
-                }}
-              >
-                <Icon
-                  name={
-                    value === 'all'
-                      ? 'all'
-                      : value === 'pending'
-                        ? 'pending'
-                        : value === 'applied'
-                          ? 'applied'
-                          : 'dismissed'
-                  }
-                />
-                <span className="nav-name">{name}</span>
-                {value === 'pending' && <span className="nav-count">{count}</span>}
+        ) : (
+          <>
+            <nav className="repository-breadcrumb" aria-label={t('repoNavigation')}>
+              <button onClick={returnToRepositories}>
+                <Icon name="previous" />
+                {t('allRepositories')}
               </button>
-            ))}
-          </nav>
-          <span className="model-badge">
-            <Bot />
-            {data.config.model}
-          </span>
-        </div>
-        {importOpen && (
-          <form
-            id="import-panel"
-            className="import-bar"
-            onSubmit={(e) => {
-              e.preventDefault();
-              run(async (call) => {
-                const res = await call<{ queued: number }>('/api/scan', {
-                  repo: data.repo,
-                  page: scanPage,
-                });
-                setImportOpen(false);
-                return { key: 'queued', params: { count: res.queued } };
-              });
-            }}
-          >
-            <div>
-              <span className="import-label">{t('importIssues')}</span>
-              <span className="import-repository">
-                <Icon name="repo" />
-                {data.repo || t('noRepositories')}
-              </span>
-            </div>
-            <div className="page-input">
-              <label htmlFor="scan-page">{t('githubPage')}</label>
-              <input
-                id="scan-page"
-                type="number"
-                min="1"
-                max="1000"
-                required
-                value={scanPage}
-                onChange={(e) => setScanPage(Number(e.target.value))}
-              />
-            </div>
-            <button disabled={busy || !data.repo}>{t('importPage')}</button>
-            <small>{t('importHint')}</small>
-          </form>
-        )}
-        {error && (
-          <div role="alert" className="error banner">
-            {localizeError(error)}
-          </div>
-        )}
-        {notice && (
-          <div role="status" className="notice banner">
-            {t(notice.key, notice.params)}
-          </div>
-        )}
-        {data.jobs.length > 0 && (
-          <details className="jobs">
-            <summary>
-              {t('jobsSummary', {
-                failed: data.jobs.filter((j) => j.status === 'failed').length,
-                total: data.jobs.length,
-              })}
-            </summary>
-            <ul>
-              {data.jobs.map((job) => (
-                <li key={job.id}>
-                  <div>
-                    <strong>
-                      {job.repo} #{job.number}
-                    </strong>
-                    <p>
-                      {job.error
-                        ? localizeError(job.error)
-                        : t(job.status === 'processing' ? 'analyzing' : 'waiting')}
-                    </p>
-                  </div>
-                  <button
-                    disabled={busy}
-                    onClick={() =>
-                      run(async (call) => {
-                        await call(`/api/jobs/${job.id}/retry`, {});
-                        return { key: 'requeued' };
-                      })
-                    }
-                  >
-                    {t('requeue')}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </details>
-        )}
-        <section
-          className={`inbox ${mobileDetail ? 'show-detail' : ''}`}
-          aria-label={t('issueReview')}
-        >
-          <div className="issue-index">
-            <div className="list-tools">
-              <label htmlFor="search" className="sr-only">
-                {t('search')}
-              </label>
-              <div className="search-input">
-                <Icon name="search" />
-                <input
-                  id="search"
-                  type="search"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder={t('searchPlaceholder')}
-                />
+              <span>/</span>
+              <span className="repository-current">{data.repo}</span>
+            </nav>
+            <header className="workspace-header">
+              <div>
+                <h1>
+                  {t('inbox')}
+                  <span className="headline-count" aria-hidden="true">
+                    {data.items.length}
+                  </span>
+                </h1>
+                <p>{t('inboxIntro')}</p>
               </div>
-              <div className="list-meta">
-                <span>{t('pageCount', { count: visible.length })}</span>
-                <span>{t('pageNumber', { page: data.page })}</span>
+              <div className="workspace-tools">
+                <button
+                  className="refresh-button"
+                  disabled={busy}
+                  onClick={() => run(async () => {})}
+                >
+                  <Icon name="refresh" className={busy ? 'spin' : ''} />
+                  {busy ? t('syncing') : t('refresh')}
+                </button>
+                <button
+                  className="import-toggle"
+                  aria-expanded={importOpen}
+                  aria-controls="import-panel"
+                  onClick={() => setImportOpen((open) => !open)}
+                >
+                  <Icon name={importOpen ? 'close' : 'download'} />
+                  {t('importToggle')}
+                </button>
               </div>
-            </div>
-            <ul className="issue-list">
-              {visible.map((item) => (
-                <li key={item.id}>
+            </header>
+            <div className="scopebar">
+              {' '}
+              <nav aria-label={t('viewScope')}>
+                {[
+                  ['pending', t('pending')],
+                  ['all', t('allRecords')],
+                  ['applied', t('applied')],
+                  ['dismissed', t('dismissed')],
+                ].map(([value, name]) => (
                   <button
-                    className={current?.id === item.id ? 'selected' : ''}
-                    aria-pressed={current?.id === item.id}
+                    key={value}
+                    className={filter === value ? 'active' : ''}
+                    aria-pressed={filter === value}
                     onClick={() => {
-                      setSelected(item.id);
-                      setMobileDetail(true);
+                      setFilter(value);
+                      setMobileDetail(false);
                     }}
                   >
-                    <span className="issue-number">
-                      <span className="issue-id">
-                        <Icon name={item.status === 'applied' ? 'applied' : 'pending'} />#
-                        {item.number}
-                      </span>
-                      <span>{label('status', item.status)}</span>
-                    </span>
-                    <strong>{item.title}</strong>
-                    <span className="issue-repo">{item.repo}</span>
-                    <span className="suggested">
-                      {item.decision.labels.length
-                        ? item.decision.labels.map((value) => (
-                            <span className="tag" key={value}>
-                              <Icon name="tag" />
-                              {value}
-                            </span>
-                          ))
-                        : t('manualJudgment')}
-                    </span>
+                    <Icon
+                      name={
+                        value === 'all'
+                          ? 'all'
+                          : value === 'pending'
+                            ? 'pending'
+                            : value === 'applied'
+                              ? 'applied'
+                              : 'dismissed'
+                      }
+                    />
+                    <span className="nav-name">{name}</span>
+                    {value === 'pending' && <span className="nav-count">{count}</span>}
                   </button>
-                </li>
-              ))}
-            </ul>
-            {visible.length === 0 && (
-              <p className="list-empty">{query ? t('noMatches') : t('noRecords')}</p>
-            )}
-            <div className="pagination">
-              <button
-                disabled={busy || data.page === 1}
-                onClick={() => run(async () => {}, data.page - 1)}
-              >
-                <Icon name="previous" />
-                {t('previous')}
-              </button>
-              <button
-                disabled={busy || data.items.length < 50}
-                onClick={() => run(async () => {}, data.page + 1)}
-              >
-                {t('next')}
-                <Icon name="next" />
-              </button>
-            </div>
-          </div>
-          {current ? (
-            <Review
-              key={`${current.id}-${current.status}`}
-              item={current}
-              labels={data.config.labels}
-              busy={busy}
-              onBack={returnToList}
-              onApply={(labels) =>
-                run(async (call) => {
-                  await call(`/api/issues/${current.id}/apply`, { labels });
-                  returnToList();
-                  return { key: 'labelsAdded' };
-                })
-              }
-              onDismiss={() =>
-                run(async (call) => {
-                  await call(`/api/issues/${current.id}/dismiss`, {});
-                  returnToList();
-                  return { key: 'skipped' };
-                })
-              }
-            />
-          ) : (
-            <div className="empty">
-              <div className="empty-mark">
+                ))}
+              </nav>
+              <span className="model-badge">
                 <Bot />
-              </div>
-              <h2>{data.items.length ? t('pageComplete') : t('getStarted')}</h2>
-              <p>{data.items.length ? t('historyHint') : t('startHint')}</p>
-              {!data.config.repos.length && <p>{t(session ? 'connectHint' : 'configureRepos')}</p>}
+                {data.config.model}
+              </span>
             </div>
-          )}
-        </section>
-        <footer className="workspace-foot">
-          {t('manualMode')} <span>{data.config.model} · JevRepoTriage 0.1</span>
-        </footer>
+            {importOpen && (
+              <form
+                id="import-panel"
+                className="import-bar"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  run(async (call) => {
+                    const res = await call<{ queued: number }>('/api/scan', {
+                      repo: data.repo,
+                      page: scanPage,
+                    });
+                    setImportOpen(false);
+                    return { key: 'queued', params: { count: res.queued } };
+                  });
+                }}
+              >
+                <div>
+                  <span className="import-label">{t('importIssues')}</span>
+                  <span className="import-repository">
+                    <Icon name="repo" />
+                    {data.repo}
+                  </span>
+                </div>
+                <div className="page-input">
+                  <label htmlFor="scan-page">{t('githubPage')}</label>
+                  <input
+                    id="scan-page"
+                    type="number"
+                    min="1"
+                    max="1000"
+                    required
+                    value={scanPage}
+                    onChange={(e) => setScanPage(Number(e.target.value))}
+                  />
+                </div>
+                <button disabled={busy || !data.repo}>{t('importPage')}</button>
+                <small>{t('importHint')}</small>
+              </form>
+            )}
+            {error && (
+              <div role="alert" className="error banner">
+                {localizeError(error)}
+              </div>
+            )}
+            {notice && (
+              <div role="status" className="notice banner">
+                {t(notice.key, notice.params)}
+              </div>
+            )}
+            {data.jobs.length > 0 && (
+              <details className="jobs">
+                <summary>
+                  {t('jobsSummary', {
+                    failed: data.jobs.filter((j) => j.status === 'failed').length,
+                    total: data.jobs.length,
+                  })}
+                </summary>
+                <ul>
+                  {data.jobs.map((job) => (
+                    <li key={job.id}>
+                      <div>
+                        <strong>
+                          {job.repo} #{job.number}
+                        </strong>
+                        <p>
+                          {job.error
+                            ? localizeError(job.error)
+                            : t(job.status === 'processing' ? 'analyzing' : 'waiting')}
+                        </p>
+                      </div>
+                      <button
+                        disabled={busy}
+                        onClick={() =>
+                          run(async (call) => {
+                            await call(`/api/jobs/${job.id}/retry`, {});
+                            return { key: 'requeued' };
+                          })
+                        }
+                      >
+                        {t('requeue')}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
+            <section
+              className={`inbox ${mobileDetail ? 'show-detail' : ''}`}
+              aria-label={t('issueReview')}
+            >
+              <div className="issue-index">
+                <div className="list-tools">
+                  <label htmlFor="search" className="sr-only">
+                    {t('search')}
+                  </label>
+                  <div className="search-input">
+                    <Icon name="search" />
+                    <input
+                      id="search"
+                      type="search"
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      placeholder={t('searchPlaceholder')}
+                    />
+                  </div>
+                  <div className="list-meta">
+                    <span>{t('pageCount', { count: visible.length })}</span>
+                    <span>{t('pageNumber', { page: data.page })}</span>
+                  </div>
+                </div>
+                <ul className="issue-list">
+                  {visible.map((item) => (
+                    <li key={item.id}>
+                      <button
+                        className={current?.id === item.id ? 'selected' : ''}
+                        aria-pressed={current?.id === item.id}
+                        onClick={() => {
+                          setSelected(item.id);
+                          setMobileDetail(true);
+                        }}
+                      >
+                        <span className="issue-number">
+                          <span className="issue-id">
+                            <Icon name={item.status === 'applied' ? 'applied' : 'pending'} />#
+                            {item.number}
+                          </span>
+                          <span>{label('status', item.status)}</span>
+                        </span>
+                        <strong>{item.title}</strong>
+                        <span className="issue-repo">{item.repo}</span>
+                        <span className="suggested">
+                          {item.decision.labels.length
+                            ? item.decision.labels.map((value) => (
+                                <span className="tag" key={value}>
+                                  <Icon name="tag" />
+                                  {value}
+                                </span>
+                              ))
+                            : t('manualJudgment')}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+                {visible.length === 0 && (
+                  <p className="list-empty">{query ? t('noMatches') : t('noRecords')}</p>
+                )}
+                <div className="pagination">
+                  <button
+                    disabled={busy || data.page === 1}
+                    onClick={() => run(async () => {}, data.page - 1)}
+                  >
+                    <Icon name="previous" />
+                    {t('previous')}
+                  </button>
+                  <button
+                    disabled={busy || data.items.length < 50}
+                    onClick={() => run(async () => {}, data.page + 1)}
+                  >
+                    {t('next')}
+                    <Icon name="next" />
+                  </button>
+                </div>
+              </div>
+              {current ? (
+                <Review
+                  key={`${current.id}-${current.status}`}
+                  item={current}
+                  labels={data.config.labels}
+                  busy={busy}
+                  onBack={returnToList}
+                  onApply={(labels) =>
+                    run(async (call) => {
+                      await call(`/api/issues/${current.id}/apply`, { labels });
+                      returnToList();
+                      return { key: 'labelsAdded' };
+                    })
+                  }
+                  onDismiss={() =>
+                    run(async (call) => {
+                      await call(`/api/issues/${current.id}/dismiss`, {});
+                      returnToList();
+                      return { key: 'skipped' };
+                    })
+                  }
+                />
+              ) : (
+                <div className="empty">
+                  <div className="empty-mark">
+                    <Bot />
+                  </div>
+                  <h2>{data.items.length ? t('pageComplete') : t('getStarted')}</h2>
+                  <p>{data.items.length ? t('historyHint') : t('startHint')}</p>
+                </div>
+              )}
+            </section>
+            <footer className="workspace-foot">
+              {t('manualMode')} <span>{data.config.model} · JevRepoTriage 0.1</span>
+            </footer>
+          </>
+        )}
       </main>
     </div>
   );

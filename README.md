@@ -54,7 +54,7 @@ The frontend and API deploy together as one Worker with Static Assets. D1 stores
 
 Enable [GitHub login](docs/deployment.md#public-github-login) to let anyone sign in, save their own Jev key, install the App and connect repositories. Each personal workspace supports up to 100 connected repositories. Access is limited to the intersection of the user’s GitHub access and the App’s installations; label writes use the user’s token.
 
-Each connected repository has its own Issue queue, job list, history and import target. Search connected repositories in the dashboard switcher, or search all accessible repositories by name in **Account & repositories** before connecting one.
+After sign-in, a searchable repository directory lists GitHub-authorized repositories with connected ones first. Choose a connected repository to enter its Issue dashboard, or connect an available repository and enter in one step. **All repositories** returns to the directory. The Issue inbox appears only after a repository is chosen; its queue, jobs, history and import target belong to that repository.
 
 By default, each user can request 200 model analyses per UTC day. Jev bills the supplied key; the operator pays Cloudflare costs. Connecting the same repository in two workspaces creates independent histories and analysis charges. Labels still modify the shared GitHub issue after explicit approval.
 

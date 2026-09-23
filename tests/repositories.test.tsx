@@ -53,12 +53,16 @@ it('opens one repository dashboard at a time and scopes imports to the selected 
   render(<App />);
   fireEvent.change(await screen.findByLabelText('Admin token'), { target: { value: admin } });
   fireEvent.click(screen.getByRole('button', { name: 'Open workspace' }));
+  await screen.findByRole('heading', { name: 'Repositories' });
+  expect(screen.queryByRole('heading', { name: 'Issue inbox' })).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'sample/alpha' }));
   await screen.findByRole('heading', { name: 'Synthetic alpha report' });
-  fireEvent.click(screen.getByRole('button', { name: 'Select repository: sample/alpha' }));
-  fireEvent.change(screen.getByLabelText('Search connected repositories'), {
+  fireEvent.click(screen.getByRole('button', { name: 'All repositories' }));
+  expect(screen.queryByRole('heading', { name: 'Issue inbox' })).toBeNull();
+  fireEvent.change(screen.getByLabelText('Search repositories'), {
     target: { value: 'BETA' },
   });
-  fireEvent.click(screen.getByRole('button', { name: 'sample/beta' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Open sample/beta dashboard' }));
   await screen.findByRole('heading', { name: 'Synthetic beta report' });
   expect(screen.queryByText('Synthetic alpha report')).toBeNull();
   expect(fetch).toHaveBeenCalledWith('/api/issues?page=1&repo=sample%2Fbeta', expect.anything());
@@ -72,6 +76,8 @@ it('opens one repository dashboard at a time and scopes imports to the selected 
       expect.objectContaining({ body: JSON.stringify({ repo: 'sample/beta', page: 1 }) }),
     ),
   );
+  fireEvent.click(screen.getByRole('button', { name: 'All repositories' }));
+  expect(screen.getByLabelText('Search repositories')).toHaveProperty('value', 'BETA');
 });
 it('searches a large available-repository list by name without rendering every row', async () => {
   const repositories = Array.from({ length: 80 }, (_, i) => ({
@@ -107,14 +113,21 @@ it('searches a large available-repository list by name without rendering every r
     }),
   );
   render(<App />);
-  await screen.findByText('synthetic-user');
-  await screen.findByLabelText('Search available repositories');
+  await screen.findByRole('heading', { name: 'Repositories' });
+  await screen.findByLabelText('Search repositories');
+  expect(screen.getByText('sample/repo-00')).toBeTruthy();
+  expect(screen.queryByText('sample/repo-31')).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'Show more repositories' }));
+  expect(screen.getByText('sample/repo-31')).toBeTruthy();
   expect(screen.queryByText('sample/needle-repo')).toBeNull();
-  fireEvent.change(screen.getByLabelText('Search available repositories'), {
+  fireEvent.change(screen.getByLabelText('Search repositories'), {
     target: { value: 'NEEDLE' },
   });
   expect(await screen.findByText('sample/needle-repo')).toBeTruthy();
   expect(screen.queryByText('sample/repo-00')).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: 'Add Jev key to open sample/needle-repo' }));
+  const keyField = await screen.findByLabelText('Your Jev API key');
+  await waitFor(() => expect(document.activeElement).toBe(keyField));
 });
 it('does not announce that access is empty while repositories are still loading', async () => {
   let finish!: (response: Response) => void;
@@ -140,7 +153,7 @@ it('does not announce that access is empty while repositories are still loading'
     }),
   );
   render(<App />);
-  await screen.findByText('synthetic-user');
+  await screen.findByRole('heading', { name: 'Repositories' });
   expect(screen.getByText('Loading repositories…')).toBeTruthy();
   expect(screen.queryByText(/No accessible repositories found/)).toBeNull();
   finish(Response.json({ repositories: [] }));
@@ -185,13 +198,79 @@ it('opens the newly connected repository dashboard after account setup', async (
     }),
   );
   render(<App />);
-  await screen.findByLabelText('Search available repositories');
-  fireEvent.change(screen.getByLabelText('Search available repositories'), {
+  await screen.findByLabelText('Search repositories');
+  fireEvent.change(screen.getByLabelText('Search repositories'), {
     target: { value: 'gamma' },
   });
-  fireEvent.click(screen.getByRole('button', { name: 'Connect' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Connect sample/gamma and open' }));
   expect(await screen.findByRole('heading', { name: 'Synthetic gamma report' })).toBeTruthy();
+  expect(screen.getByText('sample/gamma', { selector: '.repository-current' })).toBeTruthy();
+});
+it('shows a repository load failure on the repository list', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (path: string) => {
+      if (path === '/auth/status') return Response.json({ mode: 'legacy', available: false });
+      if (path === '/api/config')
+        return Response.json({ repos: ['sample/alpha'], labels: [], model: 'jev-test' });
+      if (path.startsWith('/api/issues?'))
+        return Response.json({ error: 'Synthetic repository load failed.' }, { status: 503 });
+      if (path.startsWith('/api/jobs')) return Response.json({ items: [] });
+      throw Error(path);
+    }),
+  );
+  render(<App />);
+  fireEvent.change(await screen.findByLabelText('Admin token'), { target: { value: admin } });
+  fireEvent.click(screen.getByRole('button', { name: 'Open workspace' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Open sample/alpha dashboard' }));
+  expect(await screen.findByRole('alert')).toHaveProperty(
+    'textContent',
+    expect.stringContaining('Synthetic repository load failed.'),
+  );
+  expect(screen.queryByRole('heading', { name: 'Issue inbox' })).toBeNull();
+});
+it('explains how to add repositories in an empty legacy deployment', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (path: string) => {
+      if (path === '/auth/status') return Response.json({ mode: 'legacy', available: false });
+      if (path === '/api/config')
+        return Response.json({ repos: [], labels: [], model: 'jev-test' });
+      throw Error(path);
+    }),
+  );
+  render(<App />);
+  fireEvent.change(await screen.findByLabelText('Admin token'), { target: { value: admin } });
+  fireEvent.click(screen.getByRole('button', { name: 'Open workspace' }));
   expect(
-    screen.getByRole('button', { name: 'Select repository: sample/gamma' }).textContent,
-  ).toContain('sample/gamma');
+    await screen.findByText('Set ALLOWED_REPOS in your deployment configuration first.'),
+  ).toBeTruthy();
+  expect(screen.queryByRole('heading', { name: 'Issue inbox' })).toBeNull();
+});
+it('shows a repository discovery error without claiming there are no authorized repositories', async () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn(async (path: string) => {
+      if (path === '/auth/status') return Response.json({ mode: 'github', available: true });
+      if (path === '/api/session')
+        return Response.json({
+          user: { id: '101', login: 'synthetic-user' },
+          csrf: 'synthetic-csrf',
+          keyConfigured: true,
+          installUrl: null,
+          dailyLimit: 200,
+        });
+      if (path === '/api/config')
+        return Response.json({ repos: [], labels: [], model: 'jev-test' });
+      if (path === '/api/connections')
+        return Response.json({ error: 'Synthetic discovery failed.' }, { status: 502 });
+      throw Error(path);
+    }),
+  );
+  render(<App />);
+  expect(await screen.findByRole('alert')).toHaveProperty(
+    'textContent',
+    expect.stringContaining('Synthetic discovery failed.'),
+  );
+  expect(screen.queryByText(/No accessible repositories found/)).toBeNull();
 });
