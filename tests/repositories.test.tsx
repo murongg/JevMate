@@ -202,7 +202,7 @@ it('opens the newly connected repository dashboard after account setup', async (
   fireEvent.change(screen.getByLabelText('Search repositories'), {
     target: { value: 'gamma' },
   });
-  fireEvent.click(screen.getByRole('button', { name: 'Connect sample/gamma and open' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Connect sample/gamma and open' }));
   expect(await screen.findByRole('heading', { name: 'Synthetic gamma report' })).toBeTruthy();
   expect(screen.getByText('sample/gamma', { selector: '.repository-current' })).toBeTruthy();
 });
