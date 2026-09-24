@@ -151,7 +151,7 @@ it('defaults to English even with a Chinese browser locale', async () => {
   render(<App />);
   expect(await screen.findByRole('button', { name: 'Open workspace' })).toBeTruthy();
   expect(document.documentElement.lang).toBe('en');
-  expect(document.title).toBe('JevRepoTriage · Issue workspace');
+  expect(document.title).toBe('JevRepoTriage · Issue and PR workspace');
 });
 it('persists an explicit language choice and restores it after remount', async () => {
   const { unmount } = render(<App />);
