@@ -38,6 +38,8 @@ Geist Variable is the reading and heading face. Geist Mono Variable is reserved 
 
 Navigation lives in the top command bar. Sign-in opens a searchable repository directory, with connected repositories first and accessible repositories shown in batches. Entering a repository opens its dashboard; the Issue inbox is absent from the directory. A breadcrumb returns to **All repositories**. The API scopes pagination, jobs and imports to the chosen repository. The dashboard has three functional columns: an issue queue, original report, and a Bot assessment/action panel. At typical desktop widths the queue is 270px and Bot panel 300px; the report fills the remaining space. Above 1500px they expand to 300px and 340px. The Bot panel stays sticky while reviewing longer reports.
 
+GitHub-mode dashboards have **Issues** and **Pull requests** tabs immediately below the breadcrumb. The PR tab inherits the same dark surfaces, precise seams and Bot markers. Its two-column layout keeps the live PR list beside a detail view that flows from GitHub's changed-file summary to Jev's calibrated signals and finally the editable human review. On narrow screens the PR list becomes a horizontal strip above the detail without making the page overflow sideways.
+
 At 1000px and below, report and Bot panel stack. At 800px and below, the queue and detail become separate views. Completing a review returns to the queue and focuses search. The source section precedes Bot decisions in both DOM and mobile reading order; selected issue identity drives both together. Import controls remain collapsed by default and open on demand.
 
 ## Connection page
@@ -61,5 +63,5 @@ Surfaces are opaque and divided by one-pixel seams. Corners are tight, not round
 - `web/style.css`: current visual tokens and responsive layout.
 - `web/Bot.tsx`, `web/Brand.tsx`, `web/Icon.tsx`: identity and icon system.
 - `web/Signal.tsx`: confidence display.
-- `web/App.tsx`, `web/Review.tsx`: operational composition.
+- `web/App.tsx`, `web/Review.tsx`, `web/PullInbox.tsx`: operational composition.
 - `web/locales/`: English-default and Simplified Chinese interface copy.

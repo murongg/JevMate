@@ -12,11 +12,11 @@ React, chosen by the user. Cloudflare Workers, D1 and Queues for self-hosting. D
 
 ## Users
 
-GitHub repository maintainers triaging incoming issues. PR triage is a possible future extension.
+GitHub repository maintainers triaging incoming issues and reviewing pull requests.
 
 ## Product Purpose
 
-Use Jev to classify issues and identify missing information, then let a maintainer review and apply labels.
+Use Jev to classify issues and identify missing information, and to assess PR risk and review checks. Maintainers remain responsible for labels and any published PR comment review.
 
 ## Operating Context
 
@@ -24,7 +24,7 @@ The project is named JevRepoTriage. The app runs on Cloudflare Workers and lets 
 
 ## Capabilities and Constraints
 
-Public GitHub sign-in, isolated personal workspaces, encrypted per-user Jev keys, multiple installations, searchable repository dashboards, asynchronous analysis, additive labels after manual confirmation, imports and retryable failures. No automatic comments, closing issues, code execution, or PR review in this version. Labels and module criteria come from policy.json. The model service is external; this project does not distribute model weights.
+Public GitHub sign-in, isolated personal workspaces, encrypted per-user Jev keys, multiple installations, searchable repository dashboards, asynchronous Issue analysis, additive labels after manual confirmation, imports and retryable failures. In GitHub mode, connected repositories also have an on-demand PR inbox with file summaries, Jev risk/check signals, and editable comment reviews that require an explicit confirmation. No automatic comments, closing issues, code execution, inline PR review, or automatic PR approval. Labels and module criteria come from policy.json. The model service is external; this project does not distribute model weights.
 
 ## Evidence on Hand
 

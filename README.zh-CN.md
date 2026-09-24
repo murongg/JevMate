@@ -4,7 +4,7 @@
 
 <h1 align="center">JevRepoTriage</h1>
 
-<p align="center">基于 <strong>Jev</strong> 的开源 GitHub Issue 分诊助手，可部署到自己的 Cloudflare 账户。</p>
+<p align="center">基于 <strong>Jev</strong> 的开源 GitHub Issue 与 PR 分诊助手，可部署到自己的 Cloudflare 账户。</p>
 
 <p align="center">
   <a href="https://github.com/murongg/JevRepoTriage/actions/workflows/ci.yml"><img src="https://github.com/murongg/JevRepoTriage/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI 状态" /></a>
@@ -34,14 +34,17 @@ Jev 负责判断类型、模块和信息完整度；维护者查看原文、修�
 - GitHub 登录、独立个人工作区、每个用户自带 Jev Key，密钥加密保存。
 - 支持多个 App 安装和仓库，也保留管理员令牌模式。
 - 保留已有标签；应用前核对正文是否变化；失败重试保持原先确认的标签集合。
+- 已连接仓库的 PR 收件箱：查看开放 PR、按需分析完整文本差异、编辑审查草稿，确认后发布普通 PR Review。
 
-首版采用人工确认模式，不自动评论、关闭 Issue 或修改代码。不含重复检测、PR 审查、团队工作区与统一计费系统。Jev 是外部服务，需要自行申请 API 访问权限。本项目不是 TypeSafe 或 GitHub 官方产品。
+首版采用人工确认模式，不自动评论、关闭 Issue 或修改代码。不含重复检测、逐行 PR 审查、团队工作区与统一计费系统。Jev 是外部服务，需要自行申请 API 访问权限。本项目不是 TypeSafe 或 GitHub 官方产品。
 
 ## 多用户使用
 
 按[公开登录配置](docs/deployment.md#public-github-login)启用 GitHub 登录后，任何 GitHub 用户都可以登录，填写自己的 Jev Key，安装 App 并连接仓库。每个个人工作区最多连接 100 个仓库，默认每天（UTC）最多执行 200 次模型分析。
 
 登录后先进入可搜索的仓库列表，已连接仓库排在前面。选择已连接仓库可进入其 Issue 工作台，也可从列表直接连接可用仓库并进入。「全部仓库」可返回列表。选仓库之前不会显示 Issue 收件箱；列表、任务、历史与导入目标都只属于当前仓库。
+
+进入仓库后可切换到「Pull Requests」。PR 分析需要完整的文本差异，最多支持 50 个变更文件和 16,000 字符的证据；缺失或超限的差异会明确拒绝。文件摘要来自 GitHub，Jev 提供结构化的风险与检查项概率，不生成自由文本。维护者可编辑审查留言，确认后以自己的 GitHub 授权发布普通评论式 Review。发布前会重新核对 PR 的最新提交，不会自动批准或要求修改。此功能需要 GitHub App 的 Pull Requests 读写权限。
 
 仓库权限取用户权限与 App 安装权限的交集，应用标签使用该用户的 GitHub 授权。多人连接同一仓库时，分析记录和 Jev 费用各自独立；确认应用后会修改同一个 GitHub Issue。Cloudflare 费用由部署者承担。
 
@@ -90,7 +93,7 @@ npm run check
 
 ## 数据范围
 
-Issue 标题与正文会发送给 TypeSafe，并保存在你自己的 D1 中。私有仓库也遵循这个数据流。移除白名单或卸载 App 不会自动删除已经保存的记录。首版没有自动数据清理计划。
+Issue 标题与正文，以及按需分析的 PR 描述和文本差异会发送给 TypeSafe。Issue 快照与 PR 评估元数据保存在你自己的 D1 中，原始 PR 差异不落库。私有仓库也遵循这个数据流。移除白名单或卸载 App 不会自动删除已经保存的记录。首版没有自动数据清理计划。
 
 ## 开源协议
 

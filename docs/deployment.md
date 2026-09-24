@@ -44,7 +44,7 @@ In GitHub's developer settings, create a GitHub App:
 - Homepage: your Worker URL.
 - Webhook URL: `<worker-url>/webhooks/github`.
 - Webhook secret: another random value (generate with `openssl rand -hex 32`).
-- Repository permissions: **Issues: Read and write**. Metadata read access is supplied by GitHub. No Contents or Pull Requests access is required by this MVP.
+- Repository permissions: **Issues: Read and write**. For the PR inbox and comment reviews, also grant **Pull requests: Read and write**. Metadata read access is supplied by GitHub. No Contents access is required.
 - Subscribe to **Issues** events.
 - Install the App on only the repositories you intend to manage.
 
@@ -90,10 +90,10 @@ npm run deploy
 ## Public GitHub login
 
 Apply all D1 migrations before enabling this mode. `0002.sql` adds separate account tables; it does not delete legacy jobs or history.
-For upgrades, `0003.sql` adds indexes for repository-scoped dashboard pagination without changing stored records. Apply it before deploying the repository dashboard.
+For upgrades, `0003.sql` adds indexes for repository-scoped dashboard pagination without changing stored records. `0004.sql` adds per-user PR assessments. Apply both before deploying the corresponding features.
 
 1. In the GitHub App **General** settings, set **Redirect URI** to `<worker-url>/auth/callback` with wildcard matching off. Set **Setup URL** to `<worker-url>/` so installation returns to the workspace.
-2. In **Advanced**, make the App public so any account can install it. Keep Issues read/write and Metadata read; no additional repository permissions are needed. Login happens before installation, so OAuth during installation is optional and not required.
+2. In **Advanced**, make the App public so any account can install it. Keep Issues read/write and Metadata read; add Pull requests read/write for the PR inbox and comment reviews. Existing installations may need their owners to approve this added permission. Login happens before installation, so OAuth during installation is optional and not required.
 3. Copy the App **Client ID** (different from App ID), generate a **Client Secret**, and save them as Worker secrets. Generate a separate 32-byte hex encryption key locally and save it as `CREDENTIAL_KEY`.
 
 ```sh
@@ -125,6 +125,8 @@ npm run deploy
 ```
 
 Sign in with GitHub to reach the repository directory. Open **Account & Jev key** to save your key, then install the App on selected repositories if needed. Refresh and search the directory by owner/repository name. Open a connected repository, or connect an available one and enter its dashboard. **All repositories** returns to the directory; Issues, jobs, history and imports are scoped to the selected repository. Import an issue to verify analysis; applying labels remains an explicit action. Refreshing the page restores the session at the repository directory. Signing out clears that browser session. Removing the Jev key also pauses all that user’s connections; reconnect them after saving a new key.
+
+The **Pull requests** tab is available in GitHub login mode. It reads open PRs when the tab opens and calls Jev only when a user selects **Analyze with Jev**. This consumes the same per-user daily analysis allowance as Issues. It accepts up to 50 changed text files and 16,000 characters of complete diff evidence; unsupported patches are rejected without a model call. After reviewing and editing the draft, **Publish comment review** posts a normal GitHub PR review with the user's token. It never auto-approves, requests changes, or posts inline comments. The current head SHA must still match the analyzed SHA. A network failure during posting may have an uncertain outcome; check GitHub before trying again to avoid duplicates.
 
 Credentials are encrypted using AES-GCM with per-user context. Back up `CREDENTIAL_KEY` securely and keep it stable: replacing it without a data migration makes existing encrypted credentials unreadable. Secrets never belong in source control or frontend environment variables. Sessions use Secure/HttpOnly/SameSite cookies, CSRF tokens and seven-day expiration. OAuth uses PKCE and one-use browser-bound state. Revoking GitHub authorization invalidates sessions and pauses connections.
 
@@ -159,6 +161,7 @@ In the GitHub App's **General** settings, add `https://triage.example.com/auth/c
 4. Read the original report and choose an existing label. Click **Confirm and add labels**. Confirm that it appears on GitHub and existing labels remain.
 5. Create another synthetic issue, wait for analysis, then edit its body before applying the original suggestion. The stale suggestion must be rejected; refresh/import to inspect the new analysis.
 6. If analysis fails, inspect the failed job and deployment secrets, then choose **Requeue**.
+7. In GitHub mode, open a small synthetic PR, analyze it in the **Pull requests** tab, edit the review draft, and publish only after checking the displayed diff summary. Confirm the comment review appears once on GitHub. Push another commit before publishing a second assessment and confirm the stale version is rejected.
 
 The model's probability calibration and usefulness require a separate evaluation on your task. These smoke checks only validate wiring and basic operations.
 

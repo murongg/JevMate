@@ -10,6 +10,7 @@ import { GitHub } from './github';
 import { allowedLabels, policy } from './policy';
 import { applyLabels } from './review';
 import { queueAccountJob } from './account-jobs';
+import { pullsApi } from './pulls';
 function installUrl(env: Env) {
   if (!/^[a-z0-9-]+$/.test(env.GITHUB_APP_SLUG || '')) return null;
   return `https://github.com/apps/${env.GITHUB_APP_SLUG}/installations/new`;
@@ -82,6 +83,8 @@ export async function accountsApi(
   const access = await accountAccess(env, userId),
     names = access.connected.map((r) => r.name),
     ids = access.connected.map((r) => r.id);
+  if (url.pathname === '/api/pulls' || url.pathname.startsWith('/api/pulls/'))
+    return pullsApi(req, env, body, userId, access);
   if (url.pathname === '/api/config' && req.method === 'GET')
     return Response.json({
       repos: names,

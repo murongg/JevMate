@@ -14,6 +14,12 @@ let revoked = false,
   readOnly = false,
   extraRepo = false;
 let writes: string[] = [];
+let pullHead = 'a'.repeat(40);
+let reviewWrites: { authorization: string; body: string; event: string }[] = [];
+let changeHeadOnFiles = false;
+let missingPatch = false;
+let truncatedPatch = false;
+let reviewServerError = false;
 beforeAll(async () => {
   mf = new Miniflare(
     convertV4MiniflareOptions({
@@ -23,7 +29,7 @@ beforeAll(async () => {
     }),
   );
   const db = await mf.getD1Database('DB');
-  for (const file of ['0001.sql', '0002.sql', '0003.sql'])
+  for (const file of ['0001.sql', '0002.sql', '0003.sql', '0004.sql'])
     await db.exec(
       (await readFile(new URL('../migrations/' + file, import.meta.url), 'utf8')).replace(
         /\n/g,
@@ -70,6 +76,7 @@ beforeEach(async () => {
       'account_jobs',
       'account_analyses',
       'account_events',
+      'pr_analyses',
       'usage_limits',
       'accounts',
     ].map((t) => env.DB.prepare(`DELETE FROM ${t}`)),
@@ -79,6 +86,12 @@ beforeEach(async () => {
   readOnly = false;
   extraRepo = false;
   writes = [];
+  pullHead = 'a'.repeat(40);
+  reviewWrites = [];
+  changeHeadOnFiles = false;
+  missingPatch = false;
+  truncatedPatch = false;
+  reviewServerError = false;
   for (const id of ['101', '202']) {
     const creds = await seal(
       key,
@@ -154,6 +167,54 @@ beforeEach(async () => {
         writes.push(token);
         return readOnly ? new Response('', { status: 403 }) : Response.json([]);
       }
+      if (url.includes('/pulls/7/reviews') && init?.method === 'POST') {
+        const submitted = JSON.parse(String(init.body)) as { body: string; event: string };
+        reviewWrites.push({ authorization: token, ...submitted });
+        if (reviewServerError) return new Response('', { status: 500 });
+        return readOnly ? new Response('', { status: 403 }) : Response.json({ id: 777 });
+      }
+      if (url.includes('/pulls/7/reviews')) return Response.json([]);
+      if (url.includes('/pulls/7/files')) {
+        if (changeHeadOnFiles) pullHead = 'b'.repeat(40);
+        return Response.json([
+          {
+            filename: 'src/synthetic.ts',
+            status: 'modified',
+            additions: 2,
+            deletions: 1,
+            ...(missingPatch
+              ? {}
+              : {
+                  patch: truncatedPatch
+                    ? '@@ -1 +1,2 @@\n-old\n+new'
+                    : '@@ -1 +1,2 @@\n-old\n+new\n+line',
+                }),
+          },
+        ]);
+      }
+      if (url.includes('/pulls/7'))
+        return Response.json({
+          number: 7,
+          title: 'Synthetic improvement',
+          body: 'Synthetic PR description',
+          state: 'open',
+          draft: false,
+          head: { sha: pullHead },
+          additions: 2,
+          deletions: 1,
+          changed_files: 1,
+        });
+      if (url.includes('/pulls?'))
+        return Response.json([
+          {
+            number: 7,
+            title: 'Synthetic improvement',
+            body: 'Synthetic PR description',
+            state: 'open',
+            draft: false,
+            head: { sha: pullHead },
+          },
+        ]);
       if (url.includes('/issues/1'))
         return Response.json({
           number: 1,
@@ -165,7 +226,26 @@ beforeEach(async () => {
       if (url.includes('/labels?')) return Response.json([{ name: 'bug' }]);
       if (url.includes('/issues?')) return Response.json([{ number: 1 }]);
       if (url === 'https://api.typesafe.ai/v1/models') return Response.json({ models: [] });
-      if (url === 'https://api.typesafe.ai/v1/systemone') return Response.json(result());
+      if (url === 'https://api.typesafe.ai/v1/systemone') {
+        const input = JSON.parse(String(init?.body)) as { questions: Record<string, unknown> };
+        if ('risk' in input.questions)
+          return Response.json({
+            model: 'jev-test',
+            usage: { input_tokens: 120 },
+            answers: {
+              risk: {
+                type: 'choice',
+                choice: 'medium',
+                confidence: 0.7,
+                probabilities: { low: 0.1, medium: 0.7, high: 0.2 },
+              },
+              tests: { type: 'noul', noul: 0.3 },
+              security: { type: 'noul', noul: 0.8 },
+              breaking: { type: 'noul', noul: 0.1 },
+            },
+          });
+        return Response.json(result());
+      }
       throw Error('Unexpected mock request: ' + url);
     }),
   );
@@ -628,4 +708,141 @@ it('shares a slow token refresh across concurrent workspace requests', async () 
     Array.from({ length: 3 }, () => ({ status: 'fulfilled', value: 'refreshed-101' })),
   );
   expect(refresh).toHaveBeenCalledTimes(1);
+});
+it('lists open pull requests only inside a connected repository', async () => {
+  const response = await api('/api/pulls?repo=alpha%2Frepo&page=1');
+  expect(response.status).toBe(200);
+  expect((await response.json()) as object).toMatchObject({
+    items: [{ number: 7, title: 'Synthetic improvement', analyzed: false }],
+  });
+  expect((await api('/api/pulls?repo=beta%2Frepo')).status).toBe(403);
+  expect((await api('/api/pulls?repo=alpha%2Frepo', '202')).status).toBe(403);
+});
+it('analyzes a PR diff with Jev without posting a review automatically', async () => {
+  const response = await api('/api/pulls/7/analyze', '101', { repo: 'alpha/repo' });
+  expect(response.status).toBe(200);
+  const analysis = (await response.json()) as {
+    id: string;
+    headSha: string;
+    files: { filename: string }[];
+    decision: { risk: { choice: string }; checks: string[] };
+  };
+  expect(analysis.headSha).toBe(pullHead);
+  expect(analysis.files.map((file) => file.filename)).toEqual(['src/synthetic.ts']);
+  expect(analysis.decision.risk.choice).toBe('medium');
+  expect(analysis.decision.checks).toContain('tests');
+  expect(reviewWrites).toHaveLength(0);
+  const modelCall = vi
+    .mocked(fetch)
+    .mock.calls.find(([url]) => url === 'https://api.typesafe.ai/v1/systemone');
+  expect(JSON.stringify(JSON.parse(String(modelCall?.[1]?.body)).state)).toContain('+new');
+  expect((await api(`/api/pulls/${analysis.id}`, '202')).status).toBe(404);
+});
+it('rejects publication after a new PR commit and never posts stale advice', async () => {
+  const analyzed = (await (
+    await api('/api/pulls/7/analyze', '101', { repo: 'alpha/repo' })
+  ).json()) as {
+    id: string;
+  };
+  expect(analyzed.id).toMatch(/^[A-Za-z0-9_-]{43}$/);
+  pullHead = 'b'.repeat(40);
+  expect(
+    (await api(`/api/pulls/${analyzed.id}/publish`, '101', { body: 'Synthetic review note.' }))
+      .status,
+  ).toBe(409);
+  expect(reviewWrites).toHaveLength(0);
+});
+it('publishes only an explicitly confirmed COMMENT review with the user token', async () => {
+  const analyzed = (await (
+    await api('/api/pulls/7/analyze', '101', { repo: 'alpha/repo' })
+  ).json()) as {
+    id: string;
+  };
+  expect(analyzed.id).toMatch(/^[A-Za-z0-9_-]{43}$/);
+  expect(
+    (await api(`/api/pulls/${analyzed.id}/publish`, '202', { body: 'Synthetic review note.' }))
+      .status,
+  ).toBe(404);
+  const result = await api(`/api/pulls/${analyzed.id}/publish`, '101', {
+    body: 'Synthetic review note.',
+  });
+  expect(result.status).toBe(200);
+  expect(reviewWrites).toHaveLength(1);
+  expect(reviewWrites[0]).toMatchObject({
+    authorization: 'Bearer user-101',
+    event: 'COMMENT',
+  });
+  expect(reviewWrites[0].body).toContain('Synthetic review note.');
+  expect((await api(`/api/pulls/${analyzed.id}/publish`, '101', { body: 'Again' })).status).toBe(
+    409,
+  );
+  expect(reviewWrites).toHaveLength(1);
+});
+it('does not assess files from a newer commit under an older PR head', async () => {
+  changeHeadOnFiles = true;
+  const response = await api('/api/pulls/7/analyze', '101', { repo: 'alpha/repo' });
+  expect(response.status).toBe(409);
+  expect(
+    vi.mocked(fetch).mock.calls.some(([url]) => url === 'https://api.typesafe.ai/v1/systemone'),
+  ).toBe(false);
+});
+it('does not charge a daily analysis when GitHub omits part of the diff', async () => {
+  missingPatch = true;
+  const response = await api('/api/pulls/7/analyze', '101', { repo: 'alpha/repo' });
+  expect(response.status).toBe(422);
+  expect(
+    await env.DB.prepare("SELECT used FROM usage_limits WHERE id LIKE 'analysis:101:%'").first(
+      'used',
+    ),
+  ).toBeNull();
+});
+it('rejects a text patch whose line counts do not match GitHub file totals', async () => {
+  truncatedPatch = true;
+  const response = await api('/api/pulls/7/analyze', '101', { repo: 'alpha/repo' });
+  expect(response.status).toBe(422);
+  expect(
+    vi.mocked(fetch).mock.calls.some(([url]) => url === 'https://api.typesafe.ai/v1/systemone'),
+  ).toBe(false);
+});
+it('allows retry after GitHub explicitly rejects a review without creating a duplicate', async () => {
+  const analyzed = (await (
+    await api('/api/pulls/7/analyze', '101', { repo: 'alpha/repo' })
+  ).json()) as { id: string };
+  readOnly = true;
+  expect(
+    (await api(`/api/pulls/${analyzed.id}/publish`, '101', { body: 'Synthetic review note.' }))
+      .status,
+  ).toBe(403);
+  expect(
+    await env.DB.prepare('SELECT status FROM pr_analyses WHERE id=?')
+      .bind(analyzed.id)
+      .first('status'),
+  ).toBe('pending');
+  readOnly = false;
+  expect(
+    (await api(`/api/pulls/${analyzed.id}/publish`, '101', { body: 'Synthetic review note.' }))
+      .status,
+  ).toBe(200);
+  expect(reviewWrites).toHaveLength(2);
+});
+it('locks an uncertain GitHub review result against duplicate publication', async () => {
+  const analyzed = (await (
+    await api('/api/pulls/7/analyze', '101', { repo: 'alpha/repo' })
+  ).json()) as { id: string };
+  reviewServerError = true;
+  expect(
+    (await api(`/api/pulls/${analyzed.id}/publish`, '101', { body: 'Synthetic review note.' }))
+      .status,
+  ).toBe(502);
+  expect(
+    await env.DB.prepare('SELECT status FROM pr_analyses WHERE id=?')
+      .bind(analyzed.id)
+      .first('status'),
+  ).toBe('publishing');
+  reviewServerError = false;
+  expect(
+    (await api(`/api/pulls/${analyzed.id}/publish`, '101', { body: 'Synthetic review note.' }))
+      .status,
+  ).toBe(409);
+  expect(reviewWrites).toHaveLength(1);
 });

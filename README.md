@@ -4,7 +4,7 @@
 
 <h1 align="center">JevRepoTriage</h1>
 
-<p align="center">A self-hosted GitHub issue triage assistant powered by <strong>Jev</strong>, built with React and Cloudflare Workers.</p>
+<p align="center">A self-hosted GitHub issue and PR triage assistant powered by <strong>Jev</strong>, built with React and Cloudflare Workers.</p>
 
 <p align="center">
   <a href="https://github.com/murongg/JevRepoTriage/actions/workflows/ci.yml"><img src="https://github.com/murongg/JevRepoTriage/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI status" /></a>
@@ -25,7 +25,7 @@ A dark Bot operator console with a pixel robot identity, compact issue review, a
 ![JevRepoTriage connection console](docs/screenshots/connect.png)
 ![JevRepoTriage issue review console](docs/screenshots/workspace.png)
 
-## What ships in v0.1
+## Features
 
 - Signed GitHub webhooks for opened, edited, and reopened issues.
 - Cloudflare Queues processing, retries, and visible failed jobs.
@@ -35,8 +35,9 @@ A dark Bot operator console with a pixel robot identity, compact issue review, a
 - Public GitHub sign-in, isolated personal workspaces and encrypted per-user Jev keys.
 - Multiple App installations and repositories; optional legacy admin-token mode.
 - Additive label updates, content freshness checks, and stable retry behavior after uncertain write failures.
+- A separate PR inbox for connected repositories in GitHub login mode: inspect open PRs, analyze complete text diffs on demand, edit a structured review draft, and explicitly publish a comment review.
 
-This is an early MVP. There is no automatic commenting, issue closing, duplicate detection, PR review, team billing, or automatic labeling. The source is open; Jev is an external hosted model and requires your own API access. JevRepoTriage is an independent community project, not an official TypeSafe or GitHub product.
+This is an early MVP. There is no automatic commenting, issue closing, duplicate detection, inline PR review, team billing, or automatic labeling. The source is open; Jev is an external hosted model and requires your own API access. JevRepoTriage is an independent community project, not an official TypeSafe or GitHub product.
 
 ## Architecture
 
@@ -46,6 +47,7 @@ GitHub App → Worker (signature verification) → Queues
                            GitHub current issue → Jev → D1
                                                         ↑
 React inbox → authenticated Worker API → review / apply labels
+PR tab → GitHub text diff → Jev risk checks → D1 → confirmed comment review
 ```
 
 The frontend and API deploy together as one Worker with Static Assets. D1 stores issue snapshots, decisions, job states, and approved labels. GitHub mode isolates users, checks current GitHub access and calls Jev with each user’s key. The optional legacy mode uses one admin token for all allowlisted repositories.
@@ -55,6 +57,8 @@ The frontend and API deploy together as one Worker with Static Assets. D1 stores
 Enable [GitHub login](docs/deployment.md#public-github-login) to let anyone sign in, save their own Jev key, install the App and connect repositories. Each personal workspace supports up to 100 connected repositories. Access is limited to the intersection of the user’s GitHub access and the App’s installations; label writes use the user’s token.
 
 After sign-in, a searchable repository directory lists GitHub-authorized repositories with connected ones first. Choose a connected repository to enter its Issue dashboard, or connect an available repository and enter in one step. **All repositories** returns to the directory. The Issue inbox appears only after a repository is chosen; its queue, jobs, history and import target belong to that repository.
+
+The repository dashboard also has a **Pull requests** tab. It lists open PRs from GitHub. Analysis is on demand and limited to complete text diffs of at most 50 changed files and 16,000 characters of evidence; unsupported or truncated diffs are rejected. GitHub supplies the changed-file summary, while Jev supplies structured risk and check signals. Jev does not generate prose in this API. You can edit the review draft and explicitly post a GitHub comment review. The app rechecks the PR head commit before posting and never auto-approves or requests changes. Pull Requests read/write permission is required for this feature.
 
 By default, each user can request 200 model analyses per UTC day. Jev bills the supplied key; the operator pays Cloudflare costs. Connecting the same repository in two workspaces creates independent histories and analysis charges. Labels still modify the shared GitHub issue after explicit approval.
 
@@ -116,7 +120,7 @@ Tests use synthetic fixtures, mock external APIs, and a local Miniflare D1 datab
 
 ## Data and access
 
-Issue titles and bodies are sent to TypeSafe for analysis and stored in your D1 database. Private repositories need the same consideration as any other third-party model integration. GitHub user tokens and Jev keys are encrypted in D1 with a Worker encryption secret. GitHub sessions use a Secure, HttpOnly cookie and last up to seven days; revocation invalidates them. The legacy admin token stays in page memory and is cleared on refresh. Issue bodies render as plain text to prevent embedded HTML execution.
+Issue titles and bodies, and PR descriptions and text diffs analyzed on demand, are sent to TypeSafe. Issue snapshots and PR assessment metadata are stored in your D1 database; raw PR patches are not stored. Private repositories need the same consideration as any other third-party model integration. GitHub user tokens and Jev keys are encrypted in D1 with a Worker encryption secret. GitHub sessions use a Secure, HttpOnly cookie and last up to seven days; revocation invalidates them. The legacy admin token stays in page memory and is cleared on refresh. Issue bodies render as plain text to prevent embedded HTML execution.
 
 Revoking repository access or changing the allowlist stops new operations but does not delete stored records. Remove retained data deliberately if your retention policy requires it. The MVP has no automatic retention schedule.
 
